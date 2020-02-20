@@ -10,7 +10,13 @@ let processes = [
     {
         program: "X",
         args: ["-config", "conf/10-headless.conf", ":10"],
+        wait: 2000,
     },
+    {
+        program: "firejail",
+        args: ["--profile=conf/jail.conf","--private", "--dns=1.1.1.1", "--dns=8.8.4.4", "chromium", "--no-remote"],
+        env: { "DISPLAY": ":10" }
+    }
 ];
 
 
@@ -27,22 +33,32 @@ const log = (err, ...data) => {
     write(new Date(Date.now()).toLocaleString(), ...data);
 };
 
-// Spawn each process and hook into its stdout/stderr/close
-log(false, "Spawning children");
-let running = [];
-processes.forEach(process => {
-    const child = spawn(process.program, process.args);
-    child.stdout.on("data", data => log(false, `${process.program}: ${data}`));
-    child.stderr.on("data", data => log(true, `${process.program} Error: ${data}`));
-    child.on("exit", code => log(true, `${process.program} exited with code: ${code}`));
 
-    running = [child, ...running];
-});
+(async () => {
+    let running = [];
+    log(false, "Bootstrap spawning children");
+    for(const p of processes) {
 
-const exit = signal => {
-    log(false, `Received ${signal}, cleaning up children`);
-    running.forEach(child => child.kill(signal));
-};
+        // Mix process.env with env configuration
+        const child = spawn(p.program, p.args, { env: { ...process.env, ...p.env, } });
 
-process.on("SIGINT", exit);
-process.on("SIGTERM", exit);
+        // Hook events
+        child.stdout.on("data", data => log(false, `${p.program}: ${data}`));
+        child.stderr.on("data", data => log(true, `${p.program}: ${data}`));
+        child.on("exit", code => log(true, `${p.program} exited with code: ${code}`));
+
+        running = [child, ...running];
+        // Block, allow process time if needed
+        if(p.wait) {
+            await new Promise(res => setTimeout(res, p.wait));
+        }
+    }
+
+    const exit = signal => {
+        log(false, `Received ${signal}, cleaning up children`);
+        running.forEach(child => child.kill(signal));
+    };
+    
+    process.on("SIGINT", exit);
+    process.on("SIGTERM", exit);
+})();
