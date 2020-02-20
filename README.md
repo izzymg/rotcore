@@ -11,7 +11,11 @@ signaling SDPs through the given signaling program, receiving video from **xsend
 
 ## Build & Bootstrap
 
-Run `make all` to trigger a build of the project, then run `node boostrap.js` to run a managed instance of:
+The easiest way to run these components is by using the **NodeJS** bootstrap script.
+
+Copy the secret into `conf/secret`, which is ignored by git.
+
+Run `make all` to trigger a build of the project, then run `OTHER_BRIDGE_ADDRESS=http://example.com/bridge node boostrap.js` to spawn instances of:
 
 * X11 & Chromium
 
@@ -47,9 +51,9 @@ Then:
 
 `VIDEO_STREAM_ADDRESS` UDP address of video stream data
 
-`OTHER_GATEWAY_ADDRESS` Address of the HTTP Gateway if used for signaling
+`OTHER_BRIDGE_ADDRESS` Address of the HTTP Bridge if used for signaling
 
-`GATEWAY_SECRET_PATH` Path of the secret for signaling
+`SECRET_PATH` Path of the secret for verification of signaling requests
 
 
 ## XSend dependencies

@@ -46,8 +46,8 @@ func main() {
 	} else {
 		// Gateway just gives us an implementation and an HTTP router, no server.
 		gw, err := rotcommon.New(
-			os.Getenv("OTHER_GATEWAY_ADDRESS"),
-			os.Getenv("GATEWAY_SECRET_PATH"),
+			os.Getenv("OTHER_BRIDGE_ADDRESS"),
+			os.Getenv("SECRET_PATH"),
 		)
 		gw.Debug = true
 		if err != nil {

@@ -6,8 +6,9 @@ XSend & XInteract. IzzyMG.
 
 const { spawn } = require("child_process");
 const { readFileSync } = require("fs");
+const path =  require("path");
 
-// UDP GStreamer sink ports
+const secretPath = path.join(__dirname, "conf/secret");
 
 /**
  * Simple console log wrapper.
@@ -21,6 +22,7 @@ const log = (err, ...data) => {
     }
     write(new Date(Date.now()).toLocaleString(), ...data);
 };
+
 
 /**
  * Read the GStreamer pipeline into memory.
@@ -41,9 +43,13 @@ let processes = [
     {
         program: "firejail",
         args: ["--profile=conf/jail.conf","--private", "--dns=1.1.1.1", "--dns=8.8.4.4", "chromium", "--no-remote"],
-        env: { "DISPLAY": ":10" }
+        env: { "DISPLAY": ":10" },
     },
-    
+    {
+        program: "bin/xsend",
+        args: [readPipeline()],
+        env: { "DISPLAY": ":10" },
+    },
     {
         program: "bin/xinteract",
         args: [],
@@ -53,6 +59,7 @@ let processes = [
         program: "bin/rotcore",
         args: [],
         env: {
+            "SECRET_PATH": secretPath,
             "SIGNAL_ADDRESS": "localhost:3000",
             "VIDEO_STREAM_ADDRESS": "127.0.0.1:9577",
             "AUDIO_STREAM_ADDRESS": "127.0.0.1:9578",
