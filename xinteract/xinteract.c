@@ -56,13 +56,15 @@ The caller should be repeatedly calling this to interpolate to the target.
 */
 int xi_mouse_approach(xdo_t *instance, int target_x, int target_y) {
     if(target_x > 2000) target_x = 2000;
+    if(target_x < 0) target_x = 0;
     if(target_y > 2000) target_y = 2000;
+    if(target_y < 0) target_y = 0;
     int current_x;
     int current_y;
     xdo_get_mouse_location(instance, &current_x, &current_y, 0);
 
-    int new_x = approach(target_x, current_x, 2);
-    int new_y = approach(target_y, current_y, 2);
+    int new_x = approach(target_x, current_x, 1);
+    int new_y = approach(target_y, current_y, 1);
 
     return xdo_move_mouse(instance, new_x, new_y, 0);
 }
@@ -150,6 +152,7 @@ int main(int argc, char **argv) {
                     // X11 M x y
                     mouse_x = recv_i;
                     mouse_y = recv_j;
+                    xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
                     break;
                 case 'S':
                     // X11 S dir
