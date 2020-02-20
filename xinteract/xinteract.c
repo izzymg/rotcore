@@ -22,11 +22,12 @@ int xi_send_text_string(xdo_t *instance, const char* text) {
 }
 
 // Sends a special sequence to the active window.
-int xi_send_special(xdo_t *instance, const char* sequence) {
-   return xdo_send_keysequence_window(
-       instance, CURRENTWINDOW,
-       sequence, 0
-   );
+int xi_send_special(xdo_t *instance, int type) {
+    return;
+    /*return xdo_send_keysequence_window(
+        instance, CURRENTWINDOW,
+        sequence, 0
+    );*/
 }
 
 // Basic linear interpolate
@@ -54,6 +55,8 @@ int xi_scroll(xdo_t *instance, int y) {
 The caller should be repeatedly calling this to interpolate to the target.
 */
 int xi_mouse_approach(xdo_t *instance, int target_x, int target_y) {
+    if(target_x > 2000) target_x = 2000;
+    if(target_y > 2000) target_y = 2000;
     int current_x;
     int current_y;
     xdo_get_mouse_location(instance, &current_x, &current_y, 0);
@@ -66,11 +69,7 @@ int xi_mouse_approach(xdo_t *instance, int target_x, int target_y) {
 
 
 // Send a click event.
-int xi_mouse_click(xdo_t *instance, int right_click) {
-    int button = 1;
-    if(right_click) {
-        button = 3;
-    }
+int xi_mouse_click(xdo_t *instance, int button) {
     return xdo_click_window(instance, CURRENTWINDOW, button);
 }
 
@@ -136,7 +135,7 @@ int main(int argc, char **argv) {
 
         /* Constantly interpolate mouse position
         to target even if there's no data. */
-        //xi_mouse_approach(xdo_instance, x, y);
+        xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
 
         char *data = zstr_recv_nowait(subscriber);
         if(data != NULL) {
@@ -144,7 +143,6 @@ int main(int argc, char **argv) {
                 zstr_free(&data);
                 continue;
             }
-            printf("Data\n");
 
             sscanf(data, "X11 %c %d %d", &recv_event, &recv_i, &recv_j);
             switch(recv_event) {
@@ -152,6 +150,7 @@ int main(int argc, char **argv) {
                     // X11 M x y
                     mouse_x = recv_i;
                     mouse_y = recv_j;
+                    break;
                 case 'S':
                     // X11 S dir
                     xi_scroll(xdo_instance, recv_i);
