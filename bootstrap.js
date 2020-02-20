@@ -5,20 +5,9 @@ XSend & XInteract. IzzyMG.
 */
 
 const { spawn } = require("child_process");
+const { readFileSync } = require("fs");
 
-let processes = [
-    {
-        program: "X",
-        args: ["-config", "conf/10-headless.conf", ":10"],
-        wait: 2000,
-    },
-    {
-        program: "firejail",
-        args: ["--profile=conf/jail.conf","--private", "--dns=1.1.1.1", "--dns=8.8.4.4", "chromium", "--no-remote"],
-        env: { "DISPLAY": ":10" }
-    }
-];
-
+// UDP GStreamer sink ports
 
 /**
  * Simple console log wrapper.
@@ -33,11 +22,50 @@ const log = (err, ...data) => {
     write(new Date(Date.now()).toLocaleString(), ...data);
 };
 
+/**
+ * Read the GStreamer pipeline into memory.
+*/
+const readPipeline = () => {
+    log(false, "Reading pipeline...");
+    const pipeline = readFileSync("conf/send.pipeline", { encoding: "utf8" });
+    log(false, pipeline);
+    return pipeline;
+};
+
+let processes = [
+    {
+        program: "X",
+        args: ["-config", "conf/10-headless.conf", ":10"],
+        wait: 2000,
+    },
+    {
+        program: "firejail",
+        args: ["--profile=conf/jail.conf","--private", "--dns=1.1.1.1", "--dns=8.8.4.4", "chromium", "--no-remote"],
+        env: { "DISPLAY": ":10" }
+    },
+    
+    {
+        program: "bin/xinteract",
+        args: [],
+        env: { "DISPLAY": ":10", "XI_ADDRESS": "tcp://127.0.0.1:5555" },
+    },
+    {
+        program: "bin/rotcore",
+        args: [],
+        env: {
+            "SIGNAL_ADDRESS": "localhost:3000",
+            "VIDEO_STREAM_ADDRESS": "127.0.0.1:9577",
+            "AUDIO_STREAM_ADDRESS": "127.0.0.1:9578",
+        },
+    }
+];
 
 (async () => {
     let running = [];
     log(false, "Bootstrap spawning children");
     for(const p of processes) {
+
+        log(false, `Starting ${p.program}`);
 
         // Mix process.env with env configuration
         const child = spawn(p.program, p.args, { env: { ...process.env, ...p.env, } });
@@ -46,7 +74,7 @@ const log = (err, ...data) => {
         child.stdout.on("data", data => log(false, `${p.program}: ${data}`));
         child.stderr.on("data", data => log(true, `${p.program}: ${data}`));
         child.on("exit", code => log(true, `${p.program} exited with code: ${code}`));
-
+ 
         running = [child, ...running];
         // Block, allow process time if needed
         if(p.wait) {

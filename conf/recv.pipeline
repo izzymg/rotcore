@@ -1,0 +1,1 @@
+udpsrc port=5591 ! h264parse ! decodebin ! videoconvert ! xvimagesink sync=false
