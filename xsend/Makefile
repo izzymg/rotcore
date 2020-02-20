@@ -6,7 +6,7 @@ CC = gcc
 LIBS := $(shell pkg-config --libs glib-2.0 gstreamer-1.0)
 CFLAGS := -O1 -Wall $(shell pkg-config --cflags glib-2.0 gstreamer-1.0)
 
-.PHONY: all $(EXE)
+.PHONY: all
 
 all: $(EXE)
 

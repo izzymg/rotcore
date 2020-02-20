@@ -6,7 +6,7 @@ CC = gcc
 LIBS = $(shell pkg-config --libs libczmq libzmq) -lxdo
 CFLAGS = -O1 -Wall $(shell pkg-config --cflags libczmq libzmq)
 
-.PHONY: all $(EXE)
+.PHONY: all
 
 all: $(EXE)
 
