@@ -15,7 +15,7 @@ The easiest way to run these components is by using the **NodeJS** bootstrap scr
 
 Copy the secret into `conf/secret`, which is ignored by git.
 
-Run `make all` to trigger a build of the project, then run `OTHER_BRIDGE_ADDRESS=http://example.com/bridge node boostrap.js` to spawn instances of:
+Run `make all` to trigger a build of the project, then run `SIGNAL_ADDRESS=localhost:80 node boostrap.js` to spawn instances of:
 
 * X11 & Chromium
 
