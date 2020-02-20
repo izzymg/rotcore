@@ -95,7 +95,7 @@ func (s *Streamer) StartStreaming(ctx context.Context) error {
 
 // Handshake handles incoming offers from peers, returning back an answer.
 func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtcservice.Offer) (*rtcservice.Answer, error) {
-	fmt.Printf("Offer received from %s\n", incomingOffer.GetPeerId())
+	fmt.Printf("Offer received from %q\n", incomingOffer.GetPeerId())
 
 	peerID := incomingOffer.GetPeerId()
 	if len(peerID) < 1 {
@@ -159,7 +159,7 @@ func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtcservice.Offe
 
 // NewCandidate pushes ICE candidates onto WebRTC peers.
 func (s *Streamer) NewCandidate(ctx context.Context, incomingCandidate *rtcservice.Candidate) (*rtcservice.OK, error) {
-	fmt.Printf("Candidate received from %s\n", incomingCandidate.GetPeerId())
+	fmt.Printf("Candidate received from %q`\n", incomingCandidate.GetPeerId())
 
 	peer := s.getPeer(incomingCandidate.GetPeerId())
 	if peer == nil {
