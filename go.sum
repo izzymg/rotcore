@@ -16,6 +16,8 @@ github.com/golang/mock v1.2.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfb
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs=
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/golang/protobuf v1.3.3 h1:gyjaxf+svBWX08ZjK86iN9geUJF0H6gp2IRKX6Nf6/I=
+github.com/golang/protobuf v1.3.3/go.mod h1:vzj43D7+SQXF/4pzW/hwtAqwc6iTitCiVSaWz5lYuqw=
 github.com/google/go-cmp v0.3.1 h1:Xye71clBPdm5HgqGwUkwhbynsUJZhDbS20FvLhQ2izg=
 github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
@@ -32,6 +34,16 @@ github.com/izzymg/rotcommon v0.1.2 h1:INwsoqS3gqZB6Zly2n1AuYcwwwJWB+Ve4I+UJQumsG
 github.com/izzymg/rotcommon v0.1.2/go.mod h1:UHyNJ+glHvs5W+u8xI3IRjEJRlZpqPqrwsCtw7PtWGg=
 github.com/izzymg/rotcommon v0.1.3 h1:fe5BprlDoRG06UQy/w3GtuRQneXjTwRRFX4Gw5CKUTI=
 github.com/izzymg/rotcommon v0.1.3/go.mod h1:UHyNJ+glHvs5W+u8xI3IRjEJRlZpqPqrwsCtw7PtWGg=
+github.com/izzymg/rotcommon v0.1.4 h1:0TbEwg0IYmk4OeyAGhb3W0BZzEIc7bU9hSTR2dlvHB4=
+github.com/izzymg/rotcommon v0.1.4/go.mod h1:uk9QiBP6kmwj4Lmjuq+t8Lxfomk8D6Vk/Y6nK8QvmpE=
+github.com/izzymg/rotcommon v0.1.5 h1:17DgHGvtN4nQeX+W8IE8G8pOx2nM/SC5TZOdXYesiCA=
+github.com/izzymg/rotcommon v0.1.5/go.mod h1:uk9QiBP6kmwj4Lmjuq+t8Lxfomk8D6Vk/Y6nK8QvmpE=
+github.com/izzymg/rotcommon v0.1.6 h1:/MhcKrHNpm+Abt+q1zUlzvwa2uI155LOmNdZTYKEyUo=
+github.com/izzymg/rotcommon v0.1.6/go.mod h1:uk9QiBP6kmwj4Lmjuq+t8Lxfomk8D6Vk/Y6nK8QvmpE=
+github.com/izzymg/rotcommon v0.1.7 h1:3bqfP8wtinWrZQ/i0DW9UvTShUkdCC+hnSd0L6vPj2M=
+github.com/izzymg/rotcommon v0.1.7/go.mod h1:uk9QiBP6kmwj4Lmjuq+t8Lxfomk8D6Vk/Y6nK8QvmpE=
+github.com/izzymg/rotcommon v0.1.8 h1:zwkUegy0xbtWDC+KCY0vDA3dvJznuUXtYKVYu0Gjzb0=
+github.com/izzymg/rotcommon v0.1.8/go.mod h1:uk9QiBP6kmwj4Lmjuq+t8Lxfomk8D6Vk/Y6nK8QvmpE=
 github.com/izzymg/sockparty v1.1.0 h1:zg9wEEsZc8/nhWJ0AbLwGe2arUoC6/gRILLvOZqHf0g=
 github.com/izzymg/sockparty v1.1.0/go.mod h1:aX37RK76rhjw/U78RUpbZpuwIwH4ytUyjveMOdn/fd8=
 github.com/julienschmidt/httprouter v1.3.0 h1:U0609e9tgbseu3rBINet9P48AI/D3oJs4dN7jwJOQ1U=
@@ -118,6 +130,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/twitchtv/twirp v5.10.1+incompatible h1:35js8ID9rYPKkZ0qWnuZw+q+OuCWM1GIibu1F1YImjA=
+github.com/twitchtv/twirp v5.10.1+incompatible/go.mod h1:RRJoFSAmTEh2weEqWtpPE3vFK5YBhA6bqp2l1kfCC5A=
 go.uber.org/atomic v1.4.0 h1:cxzIVoETapQEqDhQu3QfnvXAV4AlzcvUCxkVUFw3+EU=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/multierr v1.1.0 h1:HoEmRHQPVSqub6w2z2d2EOVs2fjyFRGyofhKuyDq0QI=

@@ -5,15 +5,14 @@ package rtc
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 	"sync"
 
-	"github.com/izzymg/rotcommon"
-
+	"github.com/izzymg/rotcommon/rtcservice"
 	"github.com/pion/webrtc/v2"
+	"github.com/twitchtv/twirp"
 )
 
 // ErrNoSuchPeer occurs when a peer is looked up by an ID and not found.
@@ -21,55 +20,46 @@ var ErrNoSuchPeer = errors.New("No such peer")
 
 var peerConfiguration = webrtc.Configuration{}
 
-// NewServer returns a server using the given signaler.
-func NewServer(signaler rotcommon.RTCBridge, streams []Stream) (*Server, error) {
-	// Allow ICE trickling & ICE LITE
+// New returns a RTC streamer.
+func New(streams []Stream) (*Streamer, error) {
+
 	settings := webrtc.SettingEngine{}
 	settings.SetLite(true)
 	medias := webrtc.MediaEngine{}
-	// Create and register supported codecs.
 	medias.RegisterCodec(h264Codec)
 	medias.RegisterCodec(opusCodec)
 
 	// Initialize all tracks -> streams
 	trackStreams, err := makeTrackStreams(streams)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to initialize track streams: %w", err)
 	}
 
-	// Server setup with signaler
-	server := &Server{
+	server := &Streamer{
 		api:          webrtc.NewAPI(webrtc.WithMediaEngine(medias), webrtc.WithSettingEngine(settings)),
-		signaler:     signaler,
 		peers:        make(map[string]*webrtc.PeerConnection),
 		trackStreams: trackStreams,
 	}
-
-	signaler.RegisterOfferHandler(server.onOffer)
-	signaler.RegisterICECandidateHandler(server.onICECandidate)
 
 	return server, nil
 }
 
 /*
-Server manages and streams data to WebRTC peers using a given signaler.
-The signaler passes offers/candidates and so on to the RTC server,
-which then uses the information to establish direct peer connections.
-It stores connected peers along with their signaler ID.
+Streamer manages and streams data to WebRTC peers using RPCs to signal with
+the central service, storeing active peer connections.
 */
-type Server struct {
+type Streamer struct {
 	api          *webrtc.API
-	signaler     rotcommon.RTCBridge
 	peers        map[string]*webrtc.PeerConnection
 	mut          sync.RWMutex
 	trackStreams map[*webrtc.Track]Stream
 }
 
 /*
-StartStreaming begins streaming data from configured UDP streams to the RTC tracks.
-Spawns len(streams) goroutines.
+StartStreaming begins streaming data from configured UDP streams to the RTC tracks,
+spawning len(streams) goroutines.
 */
-func (s *Server) StartStreaming(ctx context.Context) error {
+func (s *Streamer) StartStreaming(ctx context.Context) error {
 	for track, stream := range s.trackStreams {
 		raddr, err := net.ResolveUDPAddr("udp", stream.UDPAddress)
 		if err != nil {
@@ -103,73 +93,32 @@ func (s *Server) StartStreaming(ctx context.Context) error {
 	return nil
 }
 
-// Add a peer connection to the list
-func (s *Server) addPeer(id string, peer *webrtc.PeerConnection) {
-	s.mut.Lock()
-	s.peers[id] = peer
-	s.mut.Unlock()
-	fmt.Printf("Added peer %q\n", id)
-}
+// Handshake handles incoming offers from peers, returning back an answer.
+func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtcservice.Offer) (*rtcservice.Answer, error) {
+	fmt.Printf("Offer received from %q\n", incomingOffer.GetPeerId())
 
-// Remove a peer connection from the list and close the underlying connection
-func (s *Server) removePeer(id string) error {
-	s.mut.Lock()
-	if peer, ok := s.peers[id]; ok {
-		fmt.Printf("Removed peer %q\n", id)
-		err := peer.Close()
-		delete(s.peers, id)
-		s.mut.Unlock()
-		return err
+	peerID := incomingOffer.GetPeerId()
+	if len(peerID) < 1 {
+		return nil, twirp.RequiredArgumentError("Peer ID is required")
 	}
-	s.mut.Unlock()
-	return ErrNoSuchPeer
-}
 
-// TODO: drop peer from list if any failures during offer-answer setup
-
-// Handle received offers by the singaler, returning back an answer if applicable.
-func (s *Server) onOffer(id string, offerJSON []byte) {
-
-	offer := webrtc.SessionDescription{}
-	err := json.Unmarshal(offerJSON, &offer)
-	if err != nil {
-		fmt.Println(err)
-		return
+	offer := webrtc.SessionDescription{
+		Type: webrtc.SDPTypeOffer,
+		SDP:  incomingOffer.GetSdp(),
 	}
-	fmt.Printf("Offer received from %q\n", id)
 
 	// Create a connection to the peer.
-	// Peer is added so incoming ICE candidates know where to go.
 	peer, err := s.api.NewPeerConnection(peerConfiguration)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return nil, twirp.InternalErrorWith(err)
 	}
-	s.addPeer(id, peer)
 
-	// Register handlers
-	peer.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-		if candidate != nil {
-			// Send new ICE candidates to the client
-			fmt.Println("Sending ICE candidate")
-			candidateJSON, err := json.Marshal(candidate.ToJSON())
-			if err != nil {
-				fmt.Printf("Error marshaling candidate: %+v", err)
-			}
-			s.signaler.SendICECandidate(id, candidateJSON)
-		} else {
-			fmt.Println("Skipping nil candidate")
-		}
-	})
+	s.addPeer(peerID, peer)
 
-	peer.OnSignalingStateChange(func(state webrtc.SignalingState) {
-		fmt.Printf("Signal State change: %+v\n", state)
-	})
+	// Hook to remove peers when the connection state fails.
 	peer.OnICEConnectionStateChange(func(state webrtc.ICEConnectionState) {
-		fmt.Printf("ICE State change: %+v\n", state)
 		if state == webrtc.ICEConnectionStateFailed {
-			peer.Close()
-			s.removePeer(id)
+			s.removePeer(peerID)
 		}
 	})
 
@@ -177,56 +126,85 @@ func (s *Server) onOffer(id string, offerJSON []byte) {
 	for track := range s.trackStreams {
 		_, err := peer.AddTrack(track)
 		if err != nil {
-			fmt.Println(err)
-			return
+			s.removePeer(peerID)
+			return nil, twirp.InternalErrorWith(err)
 		}
 	}
 
 	// Set description about the remote peer, then answer the peer
+
 	err = peer.SetRemoteDescription(offer)
 	if err != nil {
-		fmt.Println(err)
-		return
+		s.removePeer(peerID)
+		return nil, twirp.InternalErrorWith(err)
 	}
 
 	answer, err := peer.CreateAnswer(nil)
 	if err != nil {
-		fmt.Println(err)
-		return
+		s.removePeer(peerID)
+		return nil, twirp.InternalErrorWith(err)
 	}
 
 	err = peer.SetLocalDescription(answer)
 	if err != nil {
-		fmt.Println(err)
-		return
+		s.removePeer(peerID)
+		return nil, twirp.InternalErrorWith(err)
 	}
 
-	answerJSON, err := json.Marshal(answer)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	s.signaler.SendAnswer(id, answerJSON)
+	return &rtcservice.Answer{
+		PeerId: peerID,
+		Sdp:    answer.SDP,
+	}, nil
 }
 
-// Handler received an ICE candidate by the singaler, add to peer connection
-func (s *Server) onICECandidate(id string, candidateJSON []byte) {
+// NewCandidate pushes ICE candidates onto WebRTC peers.
+func (s *Streamer) NewCandidate(ctx context.Context, incomingCandidate *rtcservice.Candidate) (*rtcservice.OK, error) {
+	fmt.Printf("Candidate received from %q`\n", incomingCandidate.GetPeerId())
+
+	peer := s.getPeer(incomingCandidate.GetPeerId())
+	if peer == nil {
+		return nil, twirp.NotFoundError("No such peer by that ID")
+	}
+
+	mid := incomingCandidate.GetSDPMid()
+	index := uint16(incomingCandidate.GetSDPMLineIndex())
+
+	peer.AddICECandidate(webrtc.ICECandidateInit{
+		SDPMid:           &mid,
+		SDPMLineIndex:    &index,
+		Candidate:        incomingCandidate.GetCandidate(),
+		UsernameFragment: incomingCandidate.GetUsernameFragment(),
+	})
+
+	return &rtcservice.OK{
+		Ok: 1,
+	}, nil
+}
+
+// Add a peer connection to the map, thread safe.
+func (s *Streamer) addPeer(id string, peer *webrtc.PeerConnection) {
+	s.mut.Lock()
+	s.peers[id] = peer
+	s.mut.Unlock()
+	fmt.Printf("Added peer %q\n", id)
+}
+
+// Fetch a peer connection from the map, thread safe.
+func (s *Streamer) getPeer(id string) *webrtc.PeerConnection {
+	s.mut.RLock()
+	defer s.mut.RUnlock()
+	return s.peers[id]
+}
+
+// Remove a peer connection from the map and close the underlying connection, thread safe.
+func (s *Streamer) removePeer(id string) error {
 	s.mut.Lock()
 	defer s.mut.Unlock()
 	if peer, ok := s.peers[id]; ok {
-		candidateInit := webrtc.ICECandidateInit{}
-		err := json.Unmarshal(candidateJSON, &candidateInit)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		peer.AddICECandidate(candidateInit)
-		fmt.Printf("Added ICE candidate from %q\n", id)
-	} else {
-		fmt.Printf("Unknown candidate peer destination %q\n", id)
+		fmt.Printf("Removed peer %q\n", id)
+		err := peer.Close()
+		delete(s.peers, id)
+		return err
 	}
-}
-
-func (s *Server) onRestart() {
-	fmt.Println("RESTART UNIMPLEMENTED")
+	return ErrNoSuchPeer
 }
