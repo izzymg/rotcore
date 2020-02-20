@@ -1,20 +1,18 @@
-BINDIR = bin
-EXE = bin/xinteract
+EXE = $(BINDIR)/xinteract
+OBJ = $(BINDIR)/xinteract.o
+SRC = xinteract.c
 
 CC = gcc
-CFLAGS = -Wall -ggdb $(shell pkg-config --cflags libczmq libzmq)
 LIBS = $(shell pkg-config --libs libczmq libzmq) -lxdo
+CFLAGS = -O1 -Wall $(shell pkg-config --cflags libczmq libzmq)
 
-.PHONY: all clean
+.PHONY: all $(EXE)
 
-all: $(EXE) $(PROG_SERVER)
+all: $(EXE)
 
-clean:
-	$(RM) $(BINDIR)/*
-
-$(EXE): $(BINDIR)/xinteract.o
+$(EXE): $(OBJ)
 	gcc $(CFLAGS) $(LIBS) -o $@ $^
 
-$(BINDIR)/xinteract.o: xinteract.c
+$(OBJ): $(SRC)
 	gcc $(CFLAGS) -c -o $@ $^
 

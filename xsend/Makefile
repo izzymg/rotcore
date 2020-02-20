@@ -1,19 +1,17 @@
-PROG := xsend
-BINDIR := bin
-SRCS := xsend.c xsend.h
+EXE = $(BINDIR)/xsend
+OBJ = $(BINDIR)/xsend.o
+SRC = xsend.c
 
-CC := gcc
+CC = gcc
 LIBS := $(shell pkg-config --libs glib-2.0 gstreamer-1.0)
-CFLAGS := -O2 -Wall $(shell pkg-config --cflags glib-2.0 gstreamer-1.0)
-CDBFLAGS := -ggdb -Og -Wall
+CFLAGS := -O1 -Wall $(shell pkg-config --cflags glib-2.0 gstreamer-1.0)
 
-.PHONY: all debug clean
+.PHONY: all $(EXE)
 
-$(PROG): $(SRCS)
-	$(CC) $(CFLAGS) $^ $(LIBS) -o $(BINDIR)/$@
+all: $(EXE)
 
-debug: $(SRCS)
-	$(CC) $(CDBFLAGS) $^ $(LIBS) -o $(BINDIR)/$@
+$(EXE): $(OBJ)
+	gcc $(CFLAGS) $(LIBS) -o $@ $^
 
-clean:
-	$(RM) $(BINDIR)/*
+$(OBJ): $(SRC)
+	gcc $(CFLAGS) -c -o $@ $^
