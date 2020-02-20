@@ -1,18 +1,27 @@
 # RotCore WebRTC & X11 streamer
 
-## WebRTC dependencies
+This repository is made up of three components used by rooms for RotCore.
 
-`gcc`
+At the top level is **webrtc_send**, a Go module which acts as an SFU and WebRTC peer connector,
+signaling SDPs through the given signaling program, receiving video from **xsend** over UDP.
 
-`pkg-config`
+**xsend** is used to stream the desktop video & audio from X11/Pulse using GStreamer, to UDP ports on the system.
 
-`glib-2.0`
+**xinteract** is used to control the keyboard and mouse of the desktop, receiving information over a message queue via TCP.
 
-`libxdo`
+## Build & Bootstrap
 
-`go`
+Run `make all` to trigger a build of the project, then run `node boostrap.js` to run a managed instance of:
 
-### Go Module/Git settings
+* X11 & Chromium
+
+* XSend
+
+* XInteract
+
+* WebRTCSend
+
+## WebRTC_Send dependencies
 
 To tell git to use your SSH keys to authenticate with Github:
 
@@ -26,25 +35,9 @@ Then:
 
 `go mod download`
 
-## Desktop streamer dependencies
+`go 1.13+`
 
-`gcc`
-
-`pkg-config`
-
-`gstreamer 1.10+`
-
-`gstreamer-plugins`: base,good,bad,ugly
-
-## Building
-
-`go mod download`
-
-`CGO_ENABLED=1 go build -o webrtc`
-
-`make`
-
-## Environment
+#### Environment
 
 `SIGNAL_ADDRESS` Address, without protocol, for signaling
 
@@ -57,3 +50,32 @@ Then:
 `OTHER_GATEWAY_ADDRESS` Address of the HTTP Gateway if used for signaling
 
 `GATEWAY_SECRET_PATH` Path of the secret for signaling
+
+
+## XSend dependencies
+
+`gcc`
+
+`pkg-config`
+
+`gstreamer 1.10+`
+
+`gstreamer-plugins`: base,good,bad,ugly
+
+#### Environment
+
+...
+
+## XInteract dependencies
+
+`libczmq libzmq 4.3+`
+
+`xdo.h` see: xdotool
+
+#### Environment
+`XI_USERNAME` Username used to authenticate with publisher
+
+`XI_PASSWORD` Password used to authenticate with publisher
+
+`XI_ADDRESS="tcp://127.0.0.1"` > `xinteract tcp://128.0.0.1`
+
