@@ -60,7 +60,6 @@ let processes = [
         args: [],
         env: {
             "SECRET_PATH": secretPath,
-            "SIGNAL_ADDRESS": "localhost:3000",
             "VIDEO_STREAM_ADDRESS": "127.0.0.1:9577",
             "AUDIO_STREAM_ADDRESS": "127.0.0.1:9578",
         },
