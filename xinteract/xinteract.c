@@ -19,7 +19,7 @@
 
 static int run = 1;
 // Sorted list of allowed special characters
-static char allowed_specials[NUM_SPECIALS][SPECIALS_LEN] = { "BackSpace", "Down", "Left", "Return", "Right", "space", "Tab", "Up" };
+static char *allowed_specials[NUM_SPECIALS] = { "space", "Return", "BackSpace", "Left", "Right", "Down", "Up", "Tab" };
 
 // Sends the text string to the active window.
 int xi_send_text_string(xdo_t *instance, const char *text) {
@@ -32,20 +32,22 @@ int xi_send_text_string(xdo_t *instance, const char *text) {
 // Sends a special sequence to the active window.
 int xi_send_special(xdo_t *instance, char *special) {
 
-    // Search for allowed special characters
-    char *sequence = bsearch(
-        special, allowed_specials,
-        NUM_SPECIALS, SPECIALS_LEN,
-        (int(*) (const void*, const void*)) strcmp
-    );
-
-    if(sequence == NULL) {
-        g_message("Ignoring invalid sequence %s\n", special);
-        return -1;
+    // Find the allowed special character
+    int found = -1;
+    for(int i = 0; i < NUM_SPECIALS; i++) {
+        int res = strcmp(special, allowed_specials[i]);
+        if(res == 0) {
+            found = 1;
+        }
     }
+
+    if(found == -1) {
+        g_message("Ignoring key sequence %s\n", special);
+    }
+
     return xdo_send_keysequence_window(
         instance, CURRENTWINDOW,
-        sequence, 0
+        special, 0
     );
 }
 
@@ -163,7 +165,7 @@ int main(int argc, char **argv) {
         // Got data, pull string in
         char *data = zstr_recv(sock);
         if(!data) {
-            g_message("Skip data\n");
+            g_message("Skip null data\n");
             continue;
         }
         int datalen = strlen(data);
@@ -207,15 +209,14 @@ int main(int argc, char **argv) {
                 if(strlen(data) > 20) {
                     break;
                 }
-                g_message("Text: %s\n", data);
                 xi_send_text_string(xdo_instance, data + 2);
+                break;
             }
             // Special character, by format X type
             case 'X': {
                 if(strlen(data) > SPECIALS_LEN) {
                     break;
                 }
-                g_message("Special: %s\n", data);
                 xi_send_special(xdo_instance, data + 2);
                 break;
             }
