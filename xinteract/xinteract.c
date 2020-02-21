@@ -13,11 +13,15 @@
 #define SCREEN_HEIGHT 720
 #define MAX_EVENT_LEN 20
 #define POLL_FREQ_MS 20
+#define NUM_SPECIALS 8
+#define SPECIALS_LEN 10
 
 static int run = 1;
+// Sorted list of allowed special characters
+static char allowed_specials[NUM_SPECIALS][SPECIALS_LEN] = { "BackSpace", "Down", "Left", "Return", "Right", "space", "Tab", "Up" };
 
 // Sends the text string to the active window.
-int xi_send_text_string(xdo_t *instance, const char* text) {
+int xi_send_text_string(xdo_t *instance, const char *text) {
     return xdo_enter_text_window(
         instance, CURRENTWINDOW,
         text, 0
@@ -25,12 +29,23 @@ int xi_send_text_string(xdo_t *instance, const char* text) {
 }
 
 // Sends a special sequence to the active window.
-int xi_send_special(xdo_t *instance, int type) {
-    return;
-    /*return xdo_send_keysequence_window(
+int xi_send_special(xdo_t *instance, char *special) {
+
+    // Search for allowed special characters
+    char *sequence = bsearch(
+        special, allowed_specials,
+        NUM_SPECIALS, SPECIALS_LEN,
+        (int(*) (const void*, const void*)) strcmp
+    );
+
+    if(sequence == NULL) {
+        printf("Ignoring invalid sequence %s\n", special);
+        return;
+    }
+    return xdo_send_keysequence_window(
         instance, CURRENTWINDOW,
         sequence, 0
-    );*/
+    );
 }
 
 // Basic linear interpolate
@@ -141,7 +156,7 @@ int main(int argc, char **argv) {
         if(sock == NULL) {
             /* Constantly interpolate mouse position
             to target even if there's no data. */
-            xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
+            //xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
             continue;
         }
 
@@ -189,12 +204,18 @@ int main(int argc, char **argv) {
                 break;
             }
             case 'T': {
-
                 if(strlen(data) > 20) {
                     break;
                 }
-                xi_send_text_string(xdo_instance, data + 1);
-
+                xi_send_text_string(xdo_instance, data + 2);
+            }
+            // Special character, by format X type
+            case 'X': {
+                if(strlen(data) > SPECIALS_LEN) {
+                    break;
+                }
+                xi_send_special(xdo_instance, data + 2);
+                break;
             }
             default:
                 printf("Ignoring unknown event\n");
@@ -202,7 +223,6 @@ int main(int argc, char **argv) {
         }
         recv_event = '-';
         zstr_free(&data);
-        printf("Free\n");
     }
 
     printf("XInteract exiting\n");

@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
     zsock_t *publisher = zsock_new(ZMQ_PUSH);
     zsock_bind(publisher, "tcp://127.0.0.1:9674");
 
+    /*
     for(int i = 0; i < 3; i++) {
         zstr_send(publisher, "M .98 .02");
         zstr_send(publisher, "M .98 .02");
@@ -43,7 +44,25 @@ int main(int argc, char **argv) {
         zstr_send(publisher, "T Backspace");
         zstr_send(publisher, "T Control");
         sleep(2);
-    }
+    }*/
+
+    zstr_send(publisher, "T asa");
+    zstr_send(publisher, "X space");
+    zstr_send(publisher, "X Tab");
+    zstr_send(publisher, "X Return");
+    zstr_send(publisher, "X Return");
+    zstr_send(publisher, "X Up");
+    zstr_send(publisher, "X Down");
+    zstr_send(publisher, "X Left");
+    zstr_send(publisher, "X Right");
+    zstr_send(publisher, "X asldad");
+    zstr_send(publisher, "X Aaa");
+    zstr_send(publisher, "X Control");
+    zstr_send(publisher, "X Shift");
+    zstr_send(publisher, "X LShift");
+    zstr_send(publisher, "X LShiftLShhift");
+    sleep(5);
+
 
     printf("XInteract exiting\n");
     zsock_destroy(&publisher);
