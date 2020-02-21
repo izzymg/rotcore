@@ -3,8 +3,8 @@ OBJ = $(BINDIR)/xinteract.o
 SRC = xinteract.c
 
 CC = gcc
-LIBS = $(shell pkg-config --libs libczmq libzmq) -lxdo
-CFLAGS = -O1 -Wall $(shell pkg-config --cflags libczmq libzmq)
+LIBS = $(shell pkg-config --libs glib-2.0 libczmq libzmq) -lxdo
+CFLAGS = -O1 -Wall $(shell pkg-config --cflags glib-2.0 libczmq libzmq)
 
 .PHONY: all
 

@@ -6,6 +6,7 @@
 #include <xdo.h>
 #include <assert.h>
 #include <math.h>
+#include <glib.h>
 
 /* XInteract: X11 m/kb interaction via zeromq. izzymg. */
 
@@ -39,7 +40,7 @@ int xi_send_special(xdo_t *instance, char *special) {
     );
 
     if(sequence == NULL) {
-        printf("Ignoring invalid sequence %s\n", special);
+        g_message("Ignoring invalid sequence %s\n", special);
         return -1;
     }
     return xdo_send_keysequence_window(
@@ -110,15 +111,15 @@ void xi_stop_running(int sig) {
 
 // XInteract entry
 int main(int argc, char **argv) {
-    printf("XInteract | xdo version %s\n", xdo_version());
+    g_message("XInteract | xdo version %s\n", xdo_version());
     int major, minor, patch;
     zmq_version (&major, &minor, &patch);
-    printf("Using ZMQ version %d.%d.%d\n", major, minor, patch);
+    g_message("Using ZMQ version %d.%d.%d\n", major, minor, patch);
 
     // Initialize XDO
     xdo_t *xdo_instance = xdo_new(NULL);
     if(xdo_instance == NULL) {
-        printf("Xdo init failure, exiting\n");
+        g_message("Xdo init failure, exiting\n");
         return EXIT_FAILURE;
     }
 
@@ -131,7 +132,7 @@ int main(int argc, char **argv) {
             address = "tcp://127.0.0.1:9674";
         }
     }
-    printf("Using address %s\n", address);
+    g_message("Using address %s\n", address);
     zsock_connect(sink, address);
 
     // Catch sigint. Done in an odd place as it often conflicts with czmq.
@@ -162,12 +163,12 @@ int main(int argc, char **argv) {
         // Got data, pull string in
         char *data = zstr_recv(sock);
         if(!data) {
-            printf("Skip data\n");
+            g_message("Skip data\n");
             continue;
         }
         int datalen = strlen(data);
         if(datalen < 2 || datalen > MAX_EVENT_LEN) {
-            printf("Discarding, invalid data length\n");
+            g_message("Discarding, invalid data length\n");
             zstr_free(&data);
             continue;
         }
@@ -206,6 +207,7 @@ int main(int argc, char **argv) {
                 if(strlen(data) > 20) {
                     break;
                 }
+                g_message("Text: %s\n", data);
                 xi_send_text_string(xdo_instance, data + 2);
             }
             // Special character, by format X type
@@ -213,18 +215,19 @@ int main(int argc, char **argv) {
                 if(strlen(data) > SPECIALS_LEN) {
                     break;
                 }
+                g_message("Special: %s\n", data);
                 xi_send_special(xdo_instance, data + 2);
                 break;
             }
             default:
-                printf("Ignoring unknown event\n");
+                g_message("Ignoring unknown event\n");
                 break;
         }
         recv_event = '-';
         zstr_free(&data);
     }
 
-    printf("XInteract exiting\n");
+    g_message("XInteract exiting\n");
     xdo_free(xdo_instance);
     zpoller_destroy(&poller);
     zsock_destroy(&sink);
