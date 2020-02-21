@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
         if(sock == NULL) {
             /* Constantly interpolate mouse position
             to target even if there's no data. */
-            //xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
+            xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
             continue;
         }
 
@@ -159,7 +159,6 @@ int main(int argc, char **argv) {
         }
 
         recv_event = data[0];
-        printf("Got event '%c'\n", recv_event);
         switch(recv_event) {
             // Move mouse, by format M .percx .percy
             case 'M': {
@@ -169,7 +168,6 @@ int main(int argc, char **argv) {
                 // Take first two floating point values
                 mouse_x = strtof(data + 1, &mouse_substr);
                 mouse_y = strtof(mouse_substr, NULL);
-                printf("Mouse: %f %f\n", mouse_x, mouse_y);
                 break;
             }
             // Scroll mouse, by format S dir
@@ -178,25 +176,33 @@ int main(int argc, char **argv) {
                     break;
                 }
                 register_n = atoi(data + 1);
-                printf("Scroll direction %d\n", register_n);
                 xi_scroll(xdo_instance, register_n);
                 break;
             }
             // Click mouse, by format C button
-            case 'C':
+            case 'C': {
                 if(strlen(data) > 3) {
                     break;
                 }
                 register_n = atoi(data + 1);
-                printf("Click button %d\n", register_n);
                 xi_mouse_click(xdo_instance, register_n);
                 break;
+            }
+            case 'T': {
+
+                if(strlen(data) > 20) {
+                    break;
+                }
+                xi_send_text_string(xdo_instance, data + 1);
+
+            }
             default:
                 printf("Ignoring unknown event\n");
                 break;
         }
         recv_event = '-';
         zstr_free(&data);
+        printf("Free\n");
     }
 
     printf("XInteract exiting\n");

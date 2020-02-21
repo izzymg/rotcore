@@ -26,8 +26,6 @@ int main(int argc, char **argv) {
         zstr_send(publisher, "M ankwjd o2i>");
         zstr_send(publisher, "S -1");
         zstr_send(publisher, "S 300");
-        zstr_send(publisher,        zstr_send(publisher, "S 1");
-"S 0");
         zstr_send(publisher, "S 02");
         zstr_send(publisher, "S 1");
         zstr_send(publisher, "S 1");
@@ -40,9 +38,14 @@ int main(int argc, char **argv) {
         zstr_send(publisher, "S 1");
         zstr_send(publisher, "C 3");
         zstr_send(publisher, "C 12309132909");
+        zstr_send(publisher, "T AAAAAAAAAAAAA");
+        zstr_send(publisher, "T NNNNASDNKAS");
+        zstr_send(publisher, "T Backspace");
+        zstr_send(publisher, "T Control");
         sleep(2);
     }
 
     printf("XInteract exiting\n");
     zsock_destroy(&publisher);
 }
+
