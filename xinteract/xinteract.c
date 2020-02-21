@@ -40,7 +40,7 @@ int xi_send_special(xdo_t *instance, char *special) {
 
     if(sequence == NULL) {
         printf("Ignoring invalid sequence %s\n", special);
-        return;
+        return -1;
     }
     return xdo_send_keysequence_window(
         instance, CURRENTWINDOW,
@@ -84,7 +84,6 @@ int xi_mouse_approach(xdo_t *instance, float percent_x, float percent_y) {
 
     int target_x = percent_x * SCREEN_WIDTH;
     int target_y = percent_y * SCREEN_HEIGHT;
-    printf("Target: %d %d\n", target_x, target_y);
 
     // Interpolate by delta
     int current_x;
@@ -156,7 +155,7 @@ int main(int argc, char **argv) {
         if(sock == NULL) {
             /* Constantly interpolate mouse position
             to target even if there's no data. */
-            //xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
+            xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
             continue;
         }
 
