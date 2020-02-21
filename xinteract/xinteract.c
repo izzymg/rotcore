@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
             }
             // Special character, by format X type
             case 'X': {
-                if(strlen(data) > SPECIALS_LEN) {
+                if(strlen(data) > 20) {
                     break;
                 }
                 xi_send_special(xdo_instance, data + 2);
