@@ -16,3 +16,5 @@ $(EXE): $(OBJ)
 $(OBJ): $(SRC)
 	gcc $(CFLAGS) -c -o $@ $^
 
+test: xinteract_test.c
+	gcc $(CFLAGS) $(LIBS) -o $@ $^

@@ -5,11 +5,14 @@
 #include <signal.h>
 #include <xdo.h>
 #include <assert.h>
+#include <math.h>
 
-/* XInteract: X11 m/kb interaction via zeromq. izzymg 2020 */
+/* XInteract: X11 m/kb interaction via zeromq. izzymg. */
 
-#define EVENT "X11 %c %d %d"
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
 #define MAX_EVENT_LEN 20
+#define POLL_FREQ_MS 20
 
 static int run = 1;
 
@@ -42,36 +45,48 @@ int approach(int target, int current, int delta) {
     return target;
 }
 
-// Scroll the window in the direction of Y.
+// Scroll the window, down if y < 1.
 int xi_scroll(xdo_t *instance, int y) {
-    int button = 4;
-    if(y < 0) {
-        button = 5;
+    // 4 = up 5 = down
+    if(y < 1) {
+        y = 5;
+    } else {
+        y = 4;
     }
-    return xdo_click_window(instance, CURRENTWINDOW, button);
+
+    return xdo_click_window(instance, CURRENTWINDOW, y);
 }
 
-/* Move the mouse closer by a delta to screen target coordinates X & Y.
+/* Move the mouse closer by a delta to screen target screen percentages X & Y.
 The caller should be repeatedly calling this to interpolate to the target.
 */
-int xi_mouse_approach(xdo_t *instance, int target_x, int target_y) {
-    if(target_x > 2000) target_x = 2000;
-    if(target_x < 0) target_x = 0;
-    if(target_y > 2000) target_y = 2000;
-    if(target_y < 0) target_y = 0;
+int xi_mouse_approach(xdo_t *instance, float percent_x, float percent_y) {
+    // Clamp 0-1
+    if(percent_x > 1.0f) percent_x = 1.0f;
+    if(percent_x < 0.0f) percent_x = 0.0f;
+    if(percent_y > 1.0f) percent_y = 1.0f;
+    if(percent_y < 0.0f) percent_y = 0.0f;
+
+    int target_x = percent_x * SCREEN_WIDTH;
+    int target_y = percent_y * SCREEN_HEIGHT;
+    printf("Target: %d %d\n", target_x, target_y);
+
+    // Interpolate by delta
     int current_x;
     int current_y;
     xdo_get_mouse_location(instance, &current_x, &current_y, 0);
 
-    int new_x = approach(target_x, current_x, 1);
-    int new_y = approach(target_y, current_y, 1);
+    int new_x = approach(target_x, current_x, 10);
+    int new_y = approach(target_y, current_y, 10);
 
     return xdo_move_mouse(instance, new_x, new_y, 0);
 }
 
 
-// Send a click event.
+// Send a click event: 1 left 2 mid 3 right.
 int xi_mouse_click(xdo_t *instance, int button) {
+    if(button < 1) button = 1;
+    if(button > 3) button = 3;
     return xdo_click_window(instance, CURRENTWINDOW, button);
 }
 
@@ -93,85 +108,99 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    /*
-    Read certificate files from environment variables and 
-    apply own certificate to self, as well as setting the server's
-    public key.
-    */
-    zsock_t *subscriber = zsock_new(ZMQ_SUB);
-    zsock_set_subscribe(subscriber, "X11");
-
+    zsock_t *sink = zsock_new(ZMQ_PULL);
     char *address = getenv("XI_ADDRESS");
     if(address == NULL) {
         if(argv[1] != NULL) {
             address = argv[1];
         } else {
-            address = "tcp://localhost:9673";
+            address = "tcp://127.0.0.1:9674";
         }
     }
     printf("Using address %s\n", address);
-
-    char *user = getenv("XI_USER");
-    char *password = getenv("XI_PASSWORD");
-    if(user != NULL) {
-        zsock_set_plain_username(subscriber, user);
-        printf("Set username\n");
-    }
-    if(password != NULL) {
-        zsock_set_plain_password(subscriber, password);
-        printf("Set password\n");
-    }
-
-    zsock_connect(subscriber, address);
+    zsock_connect(sink, address);
 
     // Catch sigint. Done in an odd place as it often conflicts with czmq.
     signal(SIGINT, xi_stop_running);
 
-    int mouse_x = 1280/2;
-    int mouse_y = 720/2;
+    // Percentages of mouse x, y coordinates
+    float mouse_x = 0.5;
+    float mouse_y = 0.5;
+    char *mouse_substr;
+
+    int register_n = 0;
+
     char recv_event = '-';
-    int recv_i;
-    int recv_j;
+
+    zpoller_t *poller = zpoller_new(sink, NULL);
 
     while(run) {
+        // Poll the second every millisecond
+        zsock_t *sock = zpoller_wait(poller, 5);
 
-        /* Constantly interpolate mouse position
-        to target even if there's no data. */
-        xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
-
-        char *data = zstr_recv_nowait(subscriber);
-        if(data != NULL) {
-            if(strlen(data) > MAX_EVENT_LEN) {
-                zstr_free(&data);
-                continue;
-            }
-
-            sscanf(data, "X11 %c %d %d", &recv_event, &recv_i, &recv_j);
-            switch(recv_event) {
-                case 'M':
-                    // X11 M x y
-                    mouse_x = recv_i;
-                    mouse_y = recv_j;
-                    xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
-                    break;
-                case 'S':
-                    // X11 S dir
-                    xi_scroll(xdo_instance, recv_i);
-                    break;
-                case 'C':
-                    // X11 C button
-                    xi_mouse_click(xdo_instance, recv_i);
-                    break;
-                default:
-                    printf("Ignoring unknown event");
-                    break;
-            }
-            recv_event = '-';
-            zstr_free(&data);
+        if(sock == NULL) {
+            /* Constantly interpolate mouse position
+            to target even if there's no data. */
+            //xi_mouse_approach(xdo_instance, mouse_x, mouse_y);
+            continue;
         }
+
+        // Got data, pull string in
+        char *data = zstr_recv(sock);
+        if(!data) {
+            printf("Skip data\n");
+            continue;
+        }
+        int datalen = strlen(data);
+        if(datalen < 2 || datalen > MAX_EVENT_LEN) {
+            printf("Discarding, invalid data length\n");
+            zstr_free(&data);
+            continue;
+        }
+
+        recv_event = data[0];
+        printf("Got event '%c'\n", recv_event);
+        switch(recv_event) {
+            // Move mouse, by format M .percx .percy
+            case 'M': {
+                if(strlen(data) > 10) {
+                    break;
+                }
+                // Take first two floating point values
+                mouse_x = strtof(data + 1, &mouse_substr);
+                mouse_y = strtof(mouse_substr, NULL);
+                printf("Mouse: %f %f\n", mouse_x, mouse_y);
+                break;
+            }
+            // Scroll mouse, by format S dir
+            case 'S': {
+                if(strlen(data) > 3) {
+                    break;
+                }
+                register_n = atoi(data + 1);
+                printf("Scroll direction %d\n", register_n);
+                xi_scroll(xdo_instance, register_n);
+                break;
+            }
+            // Click mouse, by format C button
+            case 'C':
+                if(strlen(data) > 3) {
+                    break;
+                }
+                register_n = atoi(data + 1);
+                printf("Click button %d\n", register_n);
+                xi_mouse_click(xdo_instance, register_n);
+                break;
+            default:
+                printf("Ignoring unknown event\n");
+                break;
+        }
+        recv_event = '-';
+        zstr_free(&data);
     }
 
     printf("XInteract exiting\n");
     xdo_free(xdo_instance);
-    zsock_destroy(&subscriber);
+    zpoller_destroy(&poller);
+    zsock_destroy(&sink);
 }
