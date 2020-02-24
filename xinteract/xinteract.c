@@ -126,6 +126,7 @@ int main(int argc, char **argv) {
     }
 
     zsock_t *sink = zsock_new(ZMQ_SUB);
+    zsock_set_subscribe(sink, "");
     char *address = getenv("XI_ADDRESS");
     if(address == NULL) {
         if(argv[1] != NULL) {
