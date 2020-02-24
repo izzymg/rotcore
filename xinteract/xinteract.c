@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    zsock_t *sink = zsock_new(ZMQ_PULL);
+    zsock_t *sink = zsock_new(ZMQ_SUB);
     char *address = getenv("XI_ADDRESS");
     if(address == NULL) {
         if(argv[1] != NULL) {
