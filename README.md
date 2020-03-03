@@ -19,7 +19,7 @@ Run `make all` to trigger a build of the project, then run `SIGNAL_ADDRESS=local
 
 * X11 & Chromium
 
-* XSend
+* Streamer
 
 * KBM
 
