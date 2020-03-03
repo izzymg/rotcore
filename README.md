@@ -25,7 +25,7 @@ Run `make all` to trigger a build of the project, then run `SIGNAL_ADDRESS=local
 
 * WebRTCSend
 
-## WebRTC_Send dependencies
+## WebRTCSend dependencies
 
 To tell git to use your SSH keys to authenticate with Github:
 
@@ -45,18 +45,11 @@ Then:
 
 `SIGNAL_ADDRESS` Address, without protocol, for signaling
 
-`SIGNAL_WITH_SOCKET` Use direct WebSockets for signaling
-
 `AUDIO_STREAM_ADDRESS` UDP address of audio stream data
 
 `VIDEO_STREAM_ADDRESS` UDP address of video stream data
 
-`OTHER_BRIDGE_ADDRESS` Address of the HTTP Bridge if used for signaling
-
-`SECRET_PATH` Path of the secret for verification of signaling requests
-
-
-## XSend dependencies
+## Streamer dependencies
 
 `gcc`
 
@@ -70,16 +63,10 @@ Then:
 
 ...
 
-## XInteract dependencies
+## KBM dependencies
 
-`libczmq libzmq 4.3+`
+Rust: See `cargo.toml`
 
-`xdo.h` see: xdotool
+## Args
 
-#### Environment
-`XI_USERNAME` Username used to authenticate with publisher
-
-`XI_PASSWORD` Password used to authenticate with publisher
-
-`XI_ADDRESS="tcp://127.0.0.1"` > `xinteract tcp://128.0.0.1`
-
+1. Address of TCP server
