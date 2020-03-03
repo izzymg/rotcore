@@ -1,23 +1,23 @@
 XSEND = xsend
-XINTERACT = xinteract
+KBM = kbm
 ROTCORE = rotcore
 export BINDIR = ../bin
 
-.PHONY: all clean rmobj $(XSEND) $(XINTERACT) $(ROTCORE)
+.PHONY: all clean rmobj $(XSEND) $(KBM) $(ROTCORE)
 
-all: $(XSEND) $(XINTERACT) $(ROTCORE) rmobj
+all: $(XSEND) $(KBM) $(ROTCORE) rmobj
 
 $(XSEND):
 	$(MAKE) -C $(XSEND)
 
-$(XINTERACT):
-	$(MAKE) -C $(XINTERACT)
+$(KBM):
+	$(MAKE) -C $(KBM)
 
 $(ROTCORE):
 	go build -o bin/rotcore
 
 clean:
-	$(RM) bin/*
+	$(RM) -r bin/*
 
 rmobj:
 	$(RM) bin/*.o

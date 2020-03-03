@@ -51,9 +51,9 @@ let processes = [
         env: { "DISPLAY": ":10" },
     },
     {
-        program: "bin/xinteract",
+        program: "bin/kbm/release/kbm",
         args: [],
-        env: { "DISPLAY": ":10", "XI_ADDRESS": "tcp://127.0.0.1:5555" },
+        env: { "DISPLAY": ":10", },
     },
     {
         program: "bin/rotcore",
