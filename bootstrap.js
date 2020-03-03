@@ -74,11 +74,9 @@ let processes = [
         log(false, `Starting ${p.program}`);
 
         // Mix process.env with env configuration
-        const child = spawn(p.program, p.args, { env: { ...process.env, ...p.env, } });
+        const child = spawn(p.program, p.args, { stdio: 'inherit', env: { ...process.env, ...p.env, } });
 
         // Hook events
-        child.stdout.on("data", data => log(false, `${p.program}: ${data}`));
-        child.stderr.on("data", data => log(true, `${p.program}: ${data}`));
         child.on("exit", code => log(true, `${p.program} exited with code: ${code}`));
  
         running = [child, ...running];
