@@ -2,12 +2,12 @@
 
 This repository is made up of three components used by rooms for RotCore.
 
-At the top level is **webrtc_send**, a Go module which acts as an SFU and WebRTC peer connector,
+At the top level is **webrtc_send**, a **Go** module which acts as an SFU and WebRTC peer connector,
 signaling SDPs through the given signaling program, receiving video from **xsend** over UDP.
 
-**xsend** is used to stream the desktop video & audio from X11/Pulse using GStreamer, to UDP ports on the system.
+**xsend** is written in **C/GStreamer**, used to stream the desktop video & audio from X11/Pulse using GStreamer, to UDP ports on the system.
 
-**xinteract** is used to control the keyboard and mouse of the desktop, receiving information over a message queue via TCP.
+**kbm** is written in **Rust**, used to control the keyboard and mouse of the desktop, receiving information via a TCP stream.
 
 ## Build & Bootstrap
 
@@ -21,7 +21,7 @@ Run `make all` to trigger a build of the project, then run `SIGNAL_ADDRESS=local
 
 * XSend
 
-* XInteract
+* KBM
 
 * WebRTCSend
 
