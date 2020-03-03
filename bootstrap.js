@@ -34,6 +34,7 @@ const readPipeline = () => {
     return pipeline;
 };
 
+// x11, chromium in firejail, kbm, xsend, & rotcore
 let processes = [
     {
         program: "X",
@@ -52,17 +53,10 @@ let processes = [
     },
     {
         program: "bin/kbm/release/kbm",
-        args: [],
         env: { "DISPLAY": ":10", },
     },
     {
         program: "bin/rotcore",
-        args: [],
-        env: {
-            "SECRET_PATH": secretPath,
-            "VIDEO_STREAM_ADDRESS": "127.0.0.1:9577",
-            "AUDIO_STREAM_ADDRESS": "127.0.0.1:9578",
-        },
     }
 ];
 

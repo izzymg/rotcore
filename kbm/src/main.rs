@@ -11,6 +11,7 @@ use std::net;
 use std::io;
 use std::time;
 use std::str;
+use std::env;
 
 use std::sync::Arc;
 use std::sync::mpsc;
@@ -64,7 +65,6 @@ where T: std::str::FromStr {
 }
 
 struct Server {
-    pub address: &'static str,
     pub pointer_sender: PointerSender,
     pub kb_sender: KBSender,
     pub mb_sender: MBSender,
@@ -73,10 +73,18 @@ struct Server {
 
 impl Server {
 
-    /// Start listening on address.
+    /// Start listening on address. Lazy evals cmdline args for address.
     fn listen(&self) {
-        println!("Spawning server");
-        let listener = net::TcpListener::bind(self.address).unwrap();
+
+        let args: Vec<String> = env::args().collect();
+        let mut address = args.iter().skip(1);
+        let address = match address.next() {
+            Some(a) => &a[0..a.len()],
+            None => "127.0.0.1:8080",
+        };
+
+        println!("Spawning server on {}", address);
+        let listener = net::TcpListener::bind(address).unwrap();
 
         for stream in listener.incoming() {
             match stream {
@@ -309,8 +317,8 @@ fn main() {
     /*
     Spawn TCP server.
     */
+
     let server = Server{
-        address: "127.0.0.1:7878",
         pointer_sender: mtx,
         kb_sender: kbtx,
         mb_sender: mbtx,

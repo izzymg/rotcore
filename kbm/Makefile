@@ -3,7 +3,7 @@ EXE = $(BINDIR)/kbm
 CARGO = cargo
 OPTS := build --release --bins --target-dir $(EXE)
 
-.PHONY: all
+.PHONY: all $(EXE)
 
 all: $(EXE)
 
