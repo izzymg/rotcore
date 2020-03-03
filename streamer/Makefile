@@ -1,6 +1,6 @@
-EXE = $(BINDIR)/xsend
-OBJ = $(BINDIR)/xsend.o
-SRC = xsend.c
+EXE = $(BINDIR)/streamer
+OBJ = $(BINDIR)/streamer.o
+SRC = streamer.c
 
 CC = gcc
 LIBS = $(shell pkg-config --libs glib-2.0 gstreamer-1.0 gstreamer-plugins-base-1.0)

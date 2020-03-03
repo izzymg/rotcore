@@ -1,14 +1,14 @@
-XSEND = xsend
-KBM = kbm
 ROTCORE = rotcore
+STREAMER = streamer
+KBM = kbm
 export BINDIR = ../bin
 
-.PHONY: all clean rmobj $(XSEND) $(KBM) $(ROTCORE)
+.PHONY: all clean rmobj $(STREAMER) $(KBM) $(ROTCORE)
 
-all: $(XSEND) $(KBM) $(ROTCORE) rmobj
+all: $(STREAMER) $(KBM) $(ROTCORE) rmobj
 
-$(XSEND):
-	$(MAKE) -C $(XSEND)
+$(STREAMER):
+	$(MAKE) -C $(STREAMER)
 
 $(KBM):
 	$(MAKE) -C $(KBM)

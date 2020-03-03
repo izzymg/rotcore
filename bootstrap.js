@@ -1,7 +1,5 @@
 /*
-Bootstrap begins all RotCore room required processes,
-including an X11 display, jailed chromium process, WebRTC SFU,
-XSend & XInteract. IzzyMG.
+Bootstrap begins all RotCore room required processes.
 */
 
 const { spawn } = require("child_process");
@@ -34,7 +32,7 @@ const readPipeline = () => {
     return pipeline;
 };
 
-// x11, chromium in firejail, kbm, xsend, & rotcore
+// x11, chromium in firejail, kbm, streamer, & rotcore
 let processes = [
     {
         program: "X",
@@ -47,7 +45,7 @@ let processes = [
         env: { "DISPLAY": ":10" },
     },
     {
-        program: "bin/xsend",
+        program: "bin/streamer",
         args: [readPipeline()],
         env: { "DISPLAY": ":10" },
     },
@@ -71,7 +69,10 @@ let processes = [
         const child = spawn(p.program, p.args, { stdio: 'inherit', env: { ...process.env, ...p.env, } });
 
         // Hook events
-        child.on("exit", code => log(true, `${p.program} exited with code: ${code}`));
+        child.on("exit", code => {
+            log(true, `${p.program} exited with code: ${code}`);
+            process.exit(1);
+        });
  
         running = [child, ...running];
         // Block, allow process time if needed
