@@ -12,7 +12,10 @@ import (
 	"github.com/izzymg/rotcommon/rtcservice"
 )
 
-// RotCore WebRTC entrypoint - IzzyMG, 2020
+/*
+RotCore WebRTC entrypoint - IzzyMG
+Acts as an RPC server to receive SDPs and send stream data to peers.
+*/
 
 func main() {
 
@@ -35,7 +38,7 @@ func main() {
 		audioStreamAddr = "127.0.0.1:9578"
 	}
 
-	// Setup RTC server give it UDP streams.
+	// Setup RTC server, which implements the RPC protos.
 	streamer, err := rtc.New([]rtc.Stream{
 		rtc.Stream{
 			Type:       rtc.OpusStream,
@@ -67,7 +70,6 @@ func main() {
 	server := rtcservice.NewRTCServer(streamer, nil)
 	go http.ListenAndServe(addr, server)
 
-	// Listen for interupts
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, os.Interrupt)
 	select {
