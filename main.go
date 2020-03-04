@@ -33,12 +33,12 @@ func main() {
 		addr = ":80"
 	}
 
-	audioStreamAddr, ok := os.LookupEnv("AUDIO_STREAM_ADDRESS")
+	videoStreamAddr, ok := os.LookupEnv("VIDEO_STREAM_ADDRESS")
 	if !ok {
-		audioStreamAddr = "127.0.0.1:9577"
+		videoStreamAddr = "127.0.0.1:9577"
 	}
 
-	videoStreamAddr, ok := os.LookupEnv("VIDEO_STREAM_ADDRESS")
+	audioStreamAddr, ok := os.LookupEnv("AUDIO_STREAM_ADDRESS")
 	if !ok {
 		audioStreamAddr = "127.0.0.1:9578"
 	}
