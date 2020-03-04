@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
 	"sync"
 	"testing"
 	"webrtc_send/auth"
@@ -37,17 +38,32 @@ make requests to the RPC server.
 TODO: refactor this out into short, mappable tests instead of one big function.
 */
 func TestAuthorization(t *testing.T) {
-
 	is := is.New(t)
-	addr := "localhost:9954"
-	secret := "iamfallingiamfading"
 
-	/* Setup server */
+	secretText := "iamfallingiamfading"
+
+	// Generate secret file
+	secretPath := "test_secret"
+	secretFile, err := os.Create(secretPath)
+	is.NoErr(err)
+	defer func() {
+		secretFile.Close()
+		os.Remove(secretPath)
+	}()
+
+	secretFile.WriteString(secretText)
+
+	addr := "localhost:9954"
+
+	// Setup server using secret with auth middleware
 	service := &stubService{}
 	server := rtcservice.NewRTCServer(service, nil)
 
+	authHandler, err := auth.Middleware(server, secretPath)
+	is.NoErr(err)
+
 	httpServer := http.Server{
-		Handler: auth.Middleware(server, secret),
+		Handler: authHandler,
 		Addr:    addr,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -66,7 +82,7 @@ func TestAuthorization(t *testing.T) {
 	// Setup headers without the token
 	header := make(http.Header)
 	header.Set(auth.AuthHeader, "cute-days")
-	ctx, err := twirp.WithHTTPRequestHeaders(ctx, header)
+	ctx, err = twirp.WithHTTPRequestHeaders(ctx, header)
 	if err != nil {
 		is.Fail()
 	}
@@ -146,7 +162,7 @@ func TestAuthorization(t *testing.T) {
 	}
 
 	header = make(http.Header)
-	digest, err = rotcommon.HashData("cute-days", secret)
+	digest, err = rotcommon.HashData("cute-days", secretText)
 	if err != nil {
 		is.Fail()
 	}

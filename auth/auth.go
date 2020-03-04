@@ -4,7 +4,10 @@ package auth
 import (
 	"crypto/hmac"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/izzymg/rotcommon"
 )
@@ -34,8 +37,29 @@ func forbid(message string) http.Handler {
 	})
 }
 
-// Middleware authenticates the request with a hash before calling next.
-func Middleware(next http.Handler, secret string) http.Handler {
+/*
+Middleware authenticates the request with a hash before calling next.
+The secretPath should be a path to a file which can be read by the application.
+A single line will be read, with newlines, spaces trimmed.
+*/
+func Middleware(next http.Handler, secretPath string) (http.Handler, error) {
+
+	file, err := os.Open(secretPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open secret file: %w", err)
+	}
+	defer file.Close()
+
+	secretBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read secret file: %w", err)
+	}
+
+	secret := string(secretBytes)
+	secret = strings.TrimSpace(secret)
+	secret = strings.TrimSuffix(secret, "\r\n")
+	secret = strings.TrimSuffix(secret, "\n")
+
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		authHeader := req.Header.Get(AuthHeader)
 		tokenHeader := req.Header.Get(TokenHeader)
@@ -63,5 +87,5 @@ func Middleware(next http.Handler, secret string) http.Handler {
 		}
 
 		next.ServeHTTP(rw, req)
-	})
+	}), nil
 }
