@@ -51,6 +51,7 @@ let processes = [
     },
     {
         program: "bin/kbm/release/kbm",
+        args: ["127.0.0.1:9232"],
         env: { "DISPLAY": ":10", },
     },
     {
@@ -63,10 +64,12 @@ const exit = signal => {
     console.log("Exiting");
     log(false, `Received ${signal}, cleaning up children`);
     running.forEach(child => child.kill(signal));
+    setTimeout(() => process.exit(0), 500);
 };
 
 process.on("SIGINT", exit);
 process.on("SIGTERM", exit);
+process.on("beforeExit", exit);
 
 (async () => {
     log(false, "Bootstrap spawning children");
