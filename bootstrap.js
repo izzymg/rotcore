@@ -57,9 +57,18 @@ let processes = [
         program: "bin/rotcore",
     }
 ];
+let running = [];
+
+const exit = signal => {
+    console.log("Exiting");
+    log(false, `Received ${signal}, cleaning up children`);
+    running.forEach(child => child.kill(signal));
+};
+
+process.on("SIGINT", exit);
+process.on("SIGTERM", exit);
 
 (async () => {
-    let running = [];
     log(false, "Bootstrap spawning children");
     for(const p of processes) {
 
@@ -80,12 +89,4 @@ let processes = [
             await new Promise(res => setTimeout(res, p.wait));
         }
     }
-
-    const exit = signal => {
-        log(false, `Received ${signal}, cleaning up children`);
-        running.forEach(child => child.kill(signal));
-    };
-    
-    process.on("SIGINT", exit);
-    process.on("SIGTERM", exit);
 })();
