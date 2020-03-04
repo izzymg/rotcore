@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+	"webrtc_send/auth"
 	"webrtc_send/rtc"
 
 	"github.com/izzymg/rotcommon/rtcservice"
@@ -18,6 +20,9 @@ Acts as an RPC server to receive SDPs and send stream data to peers.
 */
 
 func main() {
+
+	secretPath := flag.String("secret", "./secret.txt", "Path to a file containing a secret used to verify requests")
+	flag.Parse()
 
 	// Setup main context and configuration
 	ctx, cancel := context.WithCancel(context.Background())
@@ -64,17 +69,29 @@ func main() {
 		panic(err)
 	}
 
-	// Initialize RPC server
+	// Initialize RPC server, using HTTP auth middleware as handler.
 
-	fmt.Printf("Using %s\n", addr)
+	fmt.Printf("Starting RTC's RPC server on %s\n", addr)
 	server := rtcservice.NewRTCServer(streamer, nil)
-	go http.ListenAndServe(addr, server)
+
+	auth, err := auth.Middleware(server, *secretPath)
+	if err != nil {
+		panic(err)
+	}
+
+	httpServer := http.Server{
+		Handler: auth,
+		Addr:    addr,
+	}
+
+	go httpServer.ListenAndServe()
 
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, os.Interrupt)
 	select {
 	case <-sigint:
 		fmt.Println("Got interrupt")
+		httpServer.Close()
 		cancel()
 		<-time.After(300 * time.Millisecond)
 		return

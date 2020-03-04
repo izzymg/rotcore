@@ -41,6 +41,10 @@ Then:
 
 `go 1.13+`
 
+#### Args
+
+`./webrtc_send -secret=/path/to/secret`
+
 #### Environment
 
 `SIGNAL_ADDRESS` Address, without protocol, for signaling
