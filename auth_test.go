@@ -51,7 +51,8 @@ func TestAuthorization(t *testing.T) {
 		os.Remove(secretPath)
 	}()
 
-	secretFile.WriteString(secretText)
+	// Append a newline to ensure it's correctly stripped
+	secretFile.WriteString(secretText + "\n")
 
 	addr := "localhost:9954"
 
