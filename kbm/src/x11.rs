@@ -114,6 +114,7 @@ impl XConnection {
                 };
                 let new_current = self.mouse_approach(target, current);
                 current = new_current;
+                thread::sleep(time::Duration::from_millis(1));
         }
     }
 
@@ -212,6 +213,8 @@ impl XConnection {
                 Ok(s) => { self.enter_special(s); },
                 _ => (),
             }
+
+            thread::sleep(time::Duration::from_millis(1));
         }
     }
 
