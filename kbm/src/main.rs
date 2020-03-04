@@ -5,6 +5,7 @@ using x11rb.
 */
 
 mod x11;
+mod auth;
 
 use std::io::prelude::*;
 use std::net;
@@ -18,10 +19,9 @@ use std::sync::mpsc;
 
 use std::thread;
 
+
 /// Maximum incoming payload in bytes that can be read.
 const MAX_INCOMING_READ: usize = 100;
-
-const SECRET: &str = "spooky";
 
 const MOUSE: &[u8] = &[b'c'];
 const TEXT: &[u8] = &[b't'];
@@ -42,6 +42,7 @@ fn tcp_stream_read(mut stream: &net::TcpStream) -> Result<(usize, [u8; MAX_INCOM
         Err(err) => Err(err),
     }
 }
+
 
 /// Parse a slice of bytes as a utf-8 numerical integer.
 fn bytes_as_numerical<T>(x: &[u8]) -> Option::<T>
@@ -77,11 +78,18 @@ impl Server {
     fn listen(&self) {
 
         let args: Vec<String> = env::args().collect();
-        let mut address = args.iter().skip(1);
-        let address = match address.next() {
+
+        // Grab server address from args
+        let mut iter = args.iter();
+        iter.next();
+        let address = match iter.next() {
             Some(a) => &a[0..a.len()],
             None => "127.0.0.1:8080",
         };
+
+        // Grab server key from args
+        let key = iter.next().expect("Second argument as secret is required");
+        let key = auth::make_key(key.as_bytes());
 
         println!("Spawning server on {}", address);
         let listener = net::TcpListener::bind(address).unwrap();
@@ -90,7 +98,7 @@ impl Server {
             match stream {
                 Ok(stream) => {
                     println!("Connection established~");
-                    self.authorize_conn(stream);
+                    self.authorize_conn(stream, &key);
                 },
                 Err(err) => println!("Connection failure: {}", err),
             }
@@ -99,28 +107,49 @@ impl Server {
     }
 
     /// Check that a connection is authorized before processing its stream.
-    fn authorize_conn(&self, mut stream: net::TcpStream) {
+    fn authorize_conn(&self, stream: net::TcpStream, key: &auth::Key) {
 
+        // Read the next stream message
         stream.set_read_timeout(Some(time::Duration::from_secs(5))).unwrap();
         stream.set_write_timeout(Some(time::Duration::from_secs(5))).unwrap();
-
         let read = tcp_stream_read(&stream);
-        match read {
-            Ok((bytes_read, buffer)) => {
-                let pw = String::from_utf8_lossy(&buffer[0..bytes_read]);
 
-                if pw.trim() == SECRET {
-                    println!("Authorized connection");
-                    self.read_loop(stream);
-                } else {
-                    println!("Unauthorized connection {}", pw);
-                    stream.write("Not OK".as_bytes()).unwrap();
-                    stream.flush().unwrap();
-                    return
-                }
-            }
-            Err(err) => println!("Read failure: {}", err),
+        let (bytes_read, buf) = match read {
+            Ok(v) => v,
+            Err(err) => { println!("Read timeout: {}", err); return; },
         };
+
+        // Split into "{data} {MAC}"
+        let mut iter = buf[0..bytes_read].split(|b| b.is_ascii_whitespace());
+        let data = match iter.next() {
+            Some(v) => v,
+            None => { println!("Invalid auth, no data"); return; }
+        };
+        let mac = match iter.next() {
+            Some(v) => v,
+            None => { println!("Invalid auth, no MAC"); return; }
+        };
+
+        if data.len() < 10 {
+            println!("Invalid auth, data too small");
+            return;
+        }
+
+        // Verify the data is signed with the same key before accepting stream.
+        match auth::verify_hash(&data, &mac, &key) {
+            Ok(v) => {
+                if v == true {
+                    self.read_loop(stream)
+                } else {
+                    println!("Invalid auth");
+                    return;
+                }
+            },
+            Err(e) => {
+                println!("Auth error: {}", e);
+                return;
+            }
+        }
     }
 
     /// Core loop, owns a stream, dispatches messages.
