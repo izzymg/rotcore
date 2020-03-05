@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
     }
 
     int ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
-    g_message("%d RET\n", ret);
     g_assert(ret != GST_STATE_CHANGE_FAILURE);
 
     g_message("Pipeline setup\n");
