@@ -36,7 +36,7 @@ const readPipeline = () => {
 let processes = [
     {
         program: "X",
-        args: ["-config", "conf/10-headless.conf", ":10"],
+        args: ["-quiet", "-config", "conf/10-headless.conf", ":10"],
         wait: 2000,
     },
     {
@@ -62,7 +62,6 @@ let processes = [
 let running = [];
 
 const exit = signal => {
-    console.log("Exiting");
     log(false, `Received ${signal}, cleaning up children`);
     running.forEach(child => child.kill(signal));
 };
