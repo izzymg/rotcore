@@ -95,8 +95,8 @@ impl Server {
         let key = fs::read_to_string(key)
             .expect("Failed to read secret file");
         let key = key.trim()
-            .trim_right_matches("\r\n")
-            .trim_right_matches('\n')
+            .trim_end_matches("\r\n")
+            .trim_end_matches('\n')
             .as_bytes();
         println!("{:?}", key);
         let key = auth::make_key(key);
