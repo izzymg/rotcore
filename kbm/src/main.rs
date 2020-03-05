@@ -98,7 +98,6 @@ impl Server {
             .trim_end_matches("\r\n")
             .trim_end_matches('\n')
             .as_bytes();
-        println!("{:?}", key);
         let key = auth::make_key(key);
 
         println!("Spawning server on {}", address);
