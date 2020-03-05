@@ -44,7 +44,6 @@ fn tcp_stream_read(mut stream: &net::TcpStream) -> Result<(usize, [u8; MAX_INCOM
     }
 }
 
-
 /// Parse a slice of bytes as a utf-8 numerical integer.
 fn bytes_as_numerical<T>(x: &[u8]) -> Option::<T>
 where T: std::str::FromStr {
@@ -116,7 +115,7 @@ impl Server {
     }
 
     /// Check that a connection is authorized before processing its stream.
-    fn authorize_conn(&self, stream: net::TcpStream, key: &auth::Key) {
+    fn authorize_conn(&self, mut stream: net::TcpStream, key: &auth::Key) {
 
         // Read the next stream message
         stream.set_read_timeout(Some(time::Duration::from_secs(5))).unwrap();
@@ -148,6 +147,10 @@ impl Server {
         match auth::verify_hash(&data, &mac, &key) {
             Ok(v) => {
                 if v == true {
+                    if stream.write("OK".as_bytes()).is_err() {
+                        println!("Failed to write OK message");
+                        return
+                    };
                     self.read_loop(stream)
                 } else {
                     println!("Invalid auth");
