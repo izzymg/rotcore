@@ -6,7 +6,7 @@ const { spawn } = require("child_process");
 const { readFileSync } = require("fs");
 const path =  require("path");
 
-const secretPath = path.join(__dirname, "conf/secret");
+const secretPath = path.join(__dirname, "secret.txt");
 
 /**
  * Simple console log wrapper.
@@ -51,11 +51,12 @@ let processes = [
     },
     {
         program: "bin/kbm/release/kbm",
-        args: ["127.0.0.1:9232"],
+        args: ["127.0.0.1:9232", secretPath],
         env: { "DISPLAY": ":10", },
     },
     {
         program: "bin/rotcore",
+        args: [`-secret=${secretPath}`],
     }
 ];
 let running = [];
@@ -64,7 +65,6 @@ const exit = signal => {
     console.log("Exiting");
     log(false, `Received ${signal}, cleaning up children`);
     running.forEach(child => child.kill(signal));
-    setTimeout(() => process.exit(0), 500);
 };
 
 process.on("SIGINT", exit);
@@ -80,10 +80,17 @@ process.on("beforeExit", exit);
         // Mix process.env with env configuration
         const child = spawn(p.program, p.args, { stdio: 'inherit', env: { ...process.env, ...p.env, } });
 
+        child.on("error", err => {
+            log(true, `${p.program} exited with err: ${err}`);
+            exit("SIGKILL");
+            return;
+        });
+
         // Hook events
         child.on("exit", code => {
             log(true, `${p.program} exited with code: ${code}`);
-            process.exit(1);
+            exit("SIGKILL");
+            return;
         });
  
         running = [child, ...running];
