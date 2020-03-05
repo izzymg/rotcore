@@ -13,6 +13,7 @@ use std::io;
 use std::time;
 use std::str;
 use std::env;
+use std::fs;
 
 use std::sync::Arc;
 use std::sync::mpsc;
@@ -80,16 +81,25 @@ impl Server {
         let args: Vec<String> = env::args().collect();
 
         // Grab server address from args
-        let mut iter = args.iter();
-        iter.next();
+        let mut iter = args.iter().skip(1);
         let address = match iter.next() {
             Some(a) => &a[0..a.len()],
             None => "127.0.0.1:8080",
         };
 
         // Grab server key from args
-        let key = iter.next().expect("Second argument as secret is required");
-        let key = auth::make_key(key.as_bytes());
+        let key = match iter.next() {
+            Some(v) => &v[0..v.len()],
+            None => "./secret.txt",
+        };
+        let key = fs::read_to_string(key)
+            .expect("Failed to read secret file");
+        let key = key.trim()
+            .trim_right_matches("\r\n")
+            .trim_right_matches('\n')
+            .as_bytes();
+        println!("{:?}", key);
+        let key = auth::make_key(key);
 
         println!("Spawning server on {}", address);
         let listener = net::TcpListener::bind(address).unwrap();
