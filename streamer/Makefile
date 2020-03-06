@@ -11,7 +11,7 @@ CFLAGS = -O1 -Wall $(shell pkg-config --cflags glib-2.0 gstreamer-1.0 gstreamer-
 all: $(EXE)
 
 $(EXE): $(OBJ)
-	gcc $(CFLAGS) $(LIBS) -o $@ $^
+	gcc $(CFLAGS) -o $@ $^ $(LIBS) 
 
 $(OBJ): $(SRC)
 	gcc $(CFLAGS) -c -o $@ $^
