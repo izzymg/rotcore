@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 	"webrtc_send/auth"
 	"webrtc_send/rtc"
@@ -19,10 +20,31 @@ RotCore WebRTC entrypoint - IzzyMG
 Acts as an RPC server to receive SDPs and send stream data to peers.
 */
 
+/*
+Joins multiple flags into a slice.
+e.g. --user "mary" --user "alice" --user "bob".
+*/
+type multiStringFlag []string
+
+func (af *multiStringFlag) String() string {
+	return strings.Join(*af, ", ")
+}
+
+func (af *multiStringFlag) Set(value string) error {
+	*af = append(*af, value)
+	return nil
+}
+
 func main() {
 
 	secretPath := flag.String("secret", "./secret.txt", "Path to a file containing a secret used to verify requests")
+
+	var publicIps multiStringFlag
+	flag.Var(&publicIps, "ip", "DNAT public IPs")
+
 	flag.Parse()
+
+	fmt.Printf("WebRTC ICE-Lite IPs: %s\n", publicIps.String())
 
 	// Setup main context and configuration
 	ctx, cancel := context.WithCancel(context.Background())
@@ -53,7 +75,7 @@ func main() {
 			Type:       rtc.H264Stream,
 			UDPAddress: videoStreamAddr,
 		},
-	})
+	}, publicIps)
 
 	if err != nil {
 		cancel()

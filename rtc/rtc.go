@@ -20,11 +20,22 @@ var ErrNoSuchPeer = errors.New("No such peer")
 
 var peerConfiguration = webrtc.Configuration{}
 
-// New returns a RTC streamer.
-func New(streams []Stream) (*Streamer, error) {
+/*
+New sets up and returns a RTC streamer.
+
+The streamer acts as an ICE-Lite SFU, taking data from the given streams
+and writing them to any peers it receives from remote procedure calls.
+
+The public IPs are used to tell peers where the server is on the network,
+or public internet, to avoid needing to do a STUN lookup. As such,
+this server should be behind a DNAT public IP address.
+*/
+func New(streams []Stream, publicIPs []string) (*Streamer, error) {
 
 	settings := webrtc.SettingEngine{}
 	settings.SetLite(true)
+	settings.SetNAT1To1IPs(publicIPs, webrtc.ICECandidateTypeHost)
+
 	medias := webrtc.MediaEngine{}
 	medias.RegisterCodec(h264Codec)
 	medias.RegisterCodec(opusCodec)
