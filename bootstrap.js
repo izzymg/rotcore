@@ -36,7 +36,7 @@ let processes = [
     },
     {
         program: "bin/kbm/release/kbm",
-        args: ["127.0.0.1:9232", secretPath],
+        args: ["0.0.0.0:9232", secretPath],
         env: { "DISPLAY": ":10", },
     },
     {
