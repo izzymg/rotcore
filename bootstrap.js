@@ -26,7 +26,7 @@ let processes = [
     },
     {
         program: "firejail",
-        args: ["--profile=conf/jail.conf","--private", "--dns=1.1.1.1", "--dns=8.8.4.4", "chromium", "--no-remote"],
+        args: ["--profile=conf/jail.conf","--private", "--dns=1.1.1.1", "--dns=8.8.4.4", "chromium", "--start-fullscreen", "--incognito", "--start-maximized", "--kiosk", "duckduckgo.com"],
         env: { "DISPLAY": ":10" },
     },
     {
