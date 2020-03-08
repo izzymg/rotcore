@@ -5,25 +5,15 @@ This repository is made up of three components used by rooms for RotCore.
 At the top level is **webrtc_send**, a **Go** module which acts as an SFU and WebRTC peer connector,
 signaling SDPs through the given signaling program, receiving video from **xsend** over UDP.
 
-**xsend** is written in **C/GStreamer**, used to stream the desktop video & audio from X11/Pulse using GStreamer, to UDP ports on the system.
+**streamer** is written in **C/GStreamer**, used to stream the desktop video & audio from X11/Pulse using GStreamer, to UDP ports on the system.
 
 **kbm** is written in **Rust**, used to control the keyboard and mouse of the desktop, receiving information via a TCP stream.
 
 ## Build & Bootstrap
 
-The easiest way to run these components is by using the **NodeJS** bootstrap script.
+You can either install all of the dependencies and run `make all`, to trigger a build.
 
-Copy the secret into `conf/secret`, which is ignored by git.
-
-Run `make all` to trigger a build of the project, then run `SIGNAL_ADDRESS=localhost:80 node boostrap.js` to spawn instances of:
-
-* X11 & Chromium
-
-* Streamer
-
-* KBM
-
-* WebRTCSend
+Then run `cd deploy` `node deploy.js`, see: [deploy/README.md](deploy/README.md)
 
 ## WebRTCSend dependencies
 
@@ -43,7 +33,7 @@ Then:
 
 #### Args
 
-`./webrtc_send -secret=/path/to/secret`
+`./webrtc_send -secret=/path/to/secret --ip=xxx.xx.xxx.xx --ip=...`
 
 #### Environment
 
@@ -74,3 +64,5 @@ Rust: See `cargo.toml`
 ## Args
 
 1. Address of TCP server
+
+2. Location of secret file
