@@ -1,10 +1,8 @@
 /* Bootstraps all processes required to run an RTC room:
 
-1: x11 display
-2: browser
-3: stream.sh, to start gstreamer UDP streaming of the desktop & audio 
-4: rotcore, to take stream data and respond to WebRTC requests
-5: KBM, to allow for keyboard & mouse interaction over TCP
+1: stream.sh, to start gstreamer UDP streaming of the desktop & audio 
+2: rotcore, to take stream data and respond to WebRTC requests
+3: KBM, to allow for keyboard & mouse interaction over TCP
 
 */
 
@@ -53,15 +51,6 @@ const Process = function({ directory, executable, args, environment, }) {
 };
 
 const init = function() {
-    const x11 = new Process({
-        directory: "smallbrowse",
-        executable: "display.sh",
-    });
-
-    const browser = new Process({
-        directory: "smallbrowse",
-        executable: "browser.sh",
-    });
 
     // Stream and KBM need to know the X11 display in use.
 
@@ -93,23 +82,14 @@ const init = function() {
         console.log("Quitting children.");
         kbm.stop();
         stream.stop();
-        x11.stop();
         rotcore.stop();
-        browser.stop();
     };
 
     process.on("SIGINT", exit);
     process.on("SIGTERM", exit);
-
-    x11.start();
-    browser.start();
-
-    // Give x11 time to come alive before starting the rest.
-    setTimeout(() => {
-        kbm.start();
-        rotcore.start();
-        stream.start();
-    }, 500);
+    kbm.start();
+    rotcore.start();
+    stream.start();
 }
 
 init();
