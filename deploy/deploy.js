@@ -75,13 +75,16 @@ const init = function() {
         directory: "bin/kbm/release",
         executable: "kbm",
         environment: { DISPLAY: config.display, },
-        args: [config.rtcAddress, secretFilePath],
+        args: [config.kbmAddress, secretFilePath],
     });
 
     const rotcore = new Process({
         directory: "bin",
         executable: "rotcore",
         args: [...config.publicIps.map(ip => `--ip=${ip}`), `--secret=${secretFilePath}`],
+        environment: {
+            SIGNAL_ADDRESS: config.rtcAddress,
+        }
     });
 
     // Setup clean quit when the parent dies.
