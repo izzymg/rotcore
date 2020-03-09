@@ -52,6 +52,12 @@ const Process = function({ directory, executable, args, environment, }) {
 
 const init = function() {
 
+    const publicIps = config.getIps();
+    let ipArgs = [];
+    if(publicIps && publicIps.length > 0) {
+        ipArgs = publicIps.map(ip => `--ip=${ip}`);
+    }
+
     // Stream and KBM need to know the X11 display in use.
 
     const stream = new Process({
@@ -70,7 +76,7 @@ const init = function() {
     const rotcore = new Process({
         directory: "bin",
         executable: "rotcore",
-        args: [...config.publicIps.map(ip => `--ip=${ip}`), `--secret=${secretFilePath}`],
+        args: [...ipArgs, `--secret=${secretFilePath}`],
         environment: {
             SIGNAL_ADDRESS: config.rtcAddress,
         }
