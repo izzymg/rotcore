@@ -31,12 +31,12 @@ const Process = function({ directory, executable, args, environment, }) {
     let child;
 
     /** Quits the process if its active with a SIGTERM. */
-    this.stop = () => {
+    this.stop = kill => {
         if(!child) {
             return;
         }
         console.log(`${this.exe} exiting.`);
-        child.kill("SIGTERM");
+        child.kill(kill ? "SIGKILL" : "SIGTERM");
     };
 
     /** Spawn the process in the given work-dir. */
@@ -52,29 +52,49 @@ const Process = function({ directory, executable, args, environment, }) {
 
 const init = function() {
 
-    const publicIps = config.getIps();
+    // Process the public IPs from the environment as a comma separated list.
     let ipArgs = [];
-    if(publicIps && publicIps.length > 0) {
-        ipArgs = publicIps.map(ip => `--ip=${ip}`);
+    if(process.env.PUBLIC_IPS && process.env.PUBLIC_IPS.length > 0) {
+        ipArgs = process.env.PUBLIC_IPS.split(",").map(ip => `--ip=${ip}`);
     }
 
     // Stream and KBM need to know the X11 display in use.
 
+    const display = new Process({
+        directory: "./display",
+        executable: "display.sh",
+        environment: { DISPLAY: config.display, }
+    });
+
+    /* Whether the browser should be sandboxed.
+    See: config.ex.js */
+    let sandboxArg = "";
+    if(config.sandbox === false) {
+        sandboxArg = "--no-sandbox";
+    }
+    console.log("SANDBOX ARGS:", sandboxArg);
+    const browse = new Process({
+        directory: "./browse",
+        executable: "browse.sh",
+        environment: { DISPLAY: config.display },
+        args: [sandboxArg],
+    });
+
     const stream = new Process({
-        directory: ".",
+        directory: "./stream",
         executable: "stream.sh",
         environment: { DISPLAY: config.display, }
     });
 
     const kbm = new Process({
-        directory: "bin/kbm/release",
+        directory: "./bin/kbm/release",
         executable: "kbm",
         environment: { DISPLAY: config.display, },
         args: [config.kbmAddress, secretFilePath],
     });
 
     const rotcore = new Process({
-        directory: "bin",
+        directory: "./bin",
         executable: "rotcore",
         args: [...ipArgs, `--secret=${secretFilePath}`],
         environment: {
@@ -86,16 +106,24 @@ const init = function() {
 
     const exit = function() {
         console.log("Quitting children.");
+        display.stop();
         kbm.stop();
         stream.stop();
         rotcore.stop();
+        browse.stop(true);
     };
 
     process.on("SIGINT", exit);
     process.on("SIGTERM", exit);
-    kbm.start();
-    rotcore.start();
-    stream.start();
+
+    display.start();
+    // Give a bit for Xorg to start
+    setTimeout(() => {
+        browse.start();
+        kbm.start();
+        rotcore.start();
+        stream.start();
+    }, 500);
 }
 
 init();

@@ -1,11 +1,13 @@
 // Example configuration for deployments.
 // You should replace this file with `config.js`, which is ignored by git.
-const { execSync } = require("child_process");
-
 module.exports = {
-  /** A function which returns a string-array of all public IPs that should
-  be sent to peers, for DNAT. */
-  getIps: () => [execSync(`ip -4 addr show eth0 | grep "inet\\b" | awk '{print $2}' | cut -d/ -f1 | head -1`).toString().trim()],
+
+  /**
+  When set to false, chromium runs without a sandbox,
+  which is necessary when inside a container (e.g. docker).
+  Leave **true** unless absolutely necessary.
+  */
+ sandbox: true,
 
   /** The X display to use. Should be in the format of ":2",
   where 2 is the display integer. Include the quotes. */
