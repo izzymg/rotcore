@@ -1,4 +1,4 @@
-module webrtc_send
+module rtc
 
 go 1.13
 

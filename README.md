@@ -2,7 +2,7 @@
 
 This repository is made up of three components used by rooms for RotCore.
 
-At the top level is **webrtc_send**, a **Go** module which acts as an SFU and WebRTC peer connector,
+At the top level is **rtc**, a **Go** module which acts as an SFU and WebRTC peer connector,
 signaling SDPs through the given signaling program, receiving video from **xsend** over UDP.
 
 **streamer** is written in **C/GStreamer**, used to stream the desktop video & audio from X11/Pulse using GStreamer, to UDP ports on the system.
@@ -33,7 +33,7 @@ Then:
 
 #### Args
 
-`./webrtc_send -secret=/path/to/secret --ip=xxx.xx.xxx.xx --ip=...`
+`./rtc -secret=/path/to/secret --ip=xxx.xx.xxx.xx --ip=...`
 
 #### Environment
 

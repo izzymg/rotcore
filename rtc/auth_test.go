@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"rtc/auth"
 	"sync"
 	"testing"
-	"webrtc_send/auth"
 
 	"github.com/izzymg/rotcommon"
 	"github.com/izzymg/rotcommon/rtcservice"

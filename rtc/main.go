@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"rtc/auth"
+	"rtc/rtc"
 	"strings"
 	"time"
-	"webrtc_send/auth"
-	"webrtc_send/rtc"
 
 	"github.com/izzymg/rotcommon/rtcservice"
 )
