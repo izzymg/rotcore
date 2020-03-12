@@ -1,68 +1,50 @@
-# RotCore WebRTC & X11 streamer
+# Rotcore
 
-This repository is made up of three components used by rooms for RotCore.
+This repository acts as a monorepo for all the source code of all of the programs needed to run a Rotcore **room**.
 
-At the top level is **rtc**, a **Go** module which acts as an SFU and WebRTC peer connector,
-signaling SDPs through the given signaling program, receiving video from **xsend** over UDP.
+### RTC
 
-**streamer** is written in **C/GStreamer**, used to stream the desktop video & audio from X11/Pulse using GStreamer, to UDP ports on the system.
+RTC is the Golang application which responds to WebRTC peer calls, and streams the RTC desktop stream to them.
 
-**kbm** is written in **Rust**, used to control the keyboard and mouse of the desktop, receiving information via a TCP stream.
+It runs an HTTP server using `Twirp` to respond to remote procedure calls from authorized applications.
 
-## Build & Bootstrap
+It takes a secret used to authenticate requests, and binds to arbitrary UDP ports to stream.
 
-You can either install all of the dependencies and run `make all`, to trigger a build.
+### KBM
 
-Then run `cd deploy` `node deploy.js`, see: [deploy/README.md](deploy/README.md)
+KBM is a Rust program which allows interaction with the mouse & keyboard in x11. It connects to the x11 `$DISPLAY`,
+and starts a TCP server which authenticates only one single TCP stream if it provides an acceptable challenge.
 
-## WebRTCSend dependencies
+That server responds to special commands to click, scroll, type, etc.
 
-To tell git to use your SSH keys to authenticate with Github:
+As such, it will want the same secret as RTC.
 
-`git config url."git@github.com:".insteadOf "https://github.com/"`
+### Streamer
 
-You'll also want in your `.bashrc` or similar:
+Streamer a tiny C program which takes a gstreamer pipeline string as an argument and runs it.
 
-`export GOPRIVATE="$GOPRIVATE,github.com/izzymg"`
+In the future, it is planned to automatically restart, log events such as backlogged queues, etc.
 
-Then:
+### Deploy
 
-`go mod download`
+A series of programs is also needed to make Rotcore useful, including an X11 display, PulseAudio, Firefox,
+and their related configuration files for usability and security.
 
-`go 1.13+`
+The `deploy` folder contains a series of scripts which run all of the aforementioned applications with
+specific flags and settings, culminating in `deploy.js` which spawns RTC, KBM, Streamer, X11, and Firefox, 
+all from one easy to run NodeJS script. Configuration is done by copying `config.ex.js` -> `config.js`.
 
-#### Args
+### Building
 
-`./rtc -secret=/path/to/secret --ip=xxx.xx.xxx.xx --ip=...`
+Before running `deploy.js`, a build needs to be done of the 3 executables. There's a handy Dockerfile and associated
+`docker_build.sh` that can do this. It takes `GIT_TOKEN` as an environment variable, builds RTC, KBM, Streamer, and copies
+the resulting executables into `./deploy/bin` to be run by `deploy.js`
 
-#### Environment
+#### TL;DR
 
-`SIGNAL_ADDRESS` Address, without protocol, for signaling
-
-`AUDIO_STREAM_ADDRESS` UDP address of audio stream data
-
-`VIDEO_STREAM_ADDRESS` UDP address of video stream data
-
-## Streamer dependencies
-
-`gcc`
-
-`pkg-config`
-
-`gstreamer 1.10+`
-
-`gstreamer-plugins`: base,good,bad,ugly
-
-#### Environment
-
-...
-
-## KBM dependencies
-
-Rust: See `cargo.toml`
-
-## Args
-
-1. Address of TCP server
-
-2. Location of secret file
+```shell
+pacman -S nodejs firefox xorg-server pulseaudio # v8+
+GIT_TOKEN=aaabbbcccdddeeefff docker_build.sh
+cd deploy
+node deploy.js
+```
