@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"rtc/auth"
-	"rtc/rtc"
+	"rtc/peer"
 	"strings"
 	"time"
 
@@ -66,13 +66,13 @@ func main() {
 	}
 
 	// Setup RTC server, which implements the RPC protos.
-	streamer, err := rtc.New([]rtc.Stream{
-		rtc.Stream{
-			Type:       rtc.OpusStream,
+	streamer, err := peer.New([]peer.Stream{
+		peer.Stream{
+			Type:       peer.OpusStream,
 			UDPAddress: audioStreamAddr,
 		},
-		rtc.Stream{
-			Type:       rtc.H264Stream,
+		peer.Stream{
+			Type:       peer.H264Stream,
 			UDPAddress: videoStreamAddr,
 		},
 	}, publicIps)

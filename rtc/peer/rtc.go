@@ -1,7 +1,7 @@
 /*
-Package rtc pertains to WebRTC Peer Connection management.
+Package peer pertains to WebRTC Peer Connection management.
 */
-package rtc
+package peer
 
 import (
 	"context"
