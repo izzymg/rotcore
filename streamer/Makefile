@@ -1,5 +1,5 @@
-EXE = $(BINDIR)/streamer
-OBJ = $(BINDIR)/streamer.o
+EXE = streamer
+OBJ = streamer.o
 SRC = streamer.c
 
 CC = gcc
