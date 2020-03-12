@@ -52,8 +52,6 @@ VOLUME /data
 
 WORKDIR /app
 
-RUN ls -al
-
 COPY --from=rtc-builder /app/rtc .
 COPY --from=kbm-builder /app/kbm .
 COPY --from=streamer-builder /app/streamer .
