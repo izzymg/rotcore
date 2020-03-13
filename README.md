@@ -25,6 +25,11 @@ Streamer a tiny C program which takes a gstreamer pipeline string as an argument
 
 In the future, it is planned to automatically restart, log events such as backlogged queues, etc.
 
+
+### Provision
+
+Provision contains some data used to actually build a room virtual machine from scratch.
+
 ### Deploy
 
 A series of programs is also needed to make Rotcore useful, including an X11 display, PulseAudio, Firefox,
