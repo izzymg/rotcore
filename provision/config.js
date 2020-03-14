@@ -1,5 +1,4 @@
-// Example configuration for deployments.
-// You should replace this file with `config.js`, which is ignored by git.
+// RotCore config used for rooms
 module.exports = {
 
   /**
@@ -11,7 +10,7 @@ module.exports = {
 
   /** The X display to use. Should be in the format of ":2",
   where 2 is the display integer. Include the quotes. */
-  display: ":10",
+  display: ":0",
 
   /** Address the WebRTC app binds its TCP listener on. */
   rtcAddress: "0.0.0.0:8080",
