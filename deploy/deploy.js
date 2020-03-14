@@ -87,7 +87,7 @@ const init = function() {
     });
 
     const kbm = new Process({
-        directory: "./bin/kbm/release",
+        directory: "./bin",
         executable: "kbm",
         environment: { DISPLAY: config.display, },
         args: [config.kbmAddress, secretFilePath],
