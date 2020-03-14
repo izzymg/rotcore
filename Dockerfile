@@ -18,7 +18,7 @@ RUN git config --global url."https://${GIT_TOKEN}:@github.com/".insteadOf "https
 go build -o ./rtc
 
 # Rust KBM app
-FROM rust:1.42-slim-stretch AS kbm-builder
+FROM rust:1.40 AS kbm-builder
 
 WORKDIR /app
 
