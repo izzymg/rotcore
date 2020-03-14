@@ -28,22 +28,17 @@ COPY ./kbm .
 RUN cargo build --release && cp ./target/release/kbm /app/kbm
 
 # C Streamer app
-FROM alpine:edge AS streamer-builder
+FROM ubuntu:18.04 AS streamer-builder
 
 WORKDIR /app
 COPY ./streamer .
 
 # Alpine needs musl-dev due to its smaller libc version lacking headers
-RUN apk add --no-cache \
-    musl-dev \
+RUN apt -y -q update && apt -y -q install \
     gcc \
     make \
-    glib-dev \
-    gst-plugins-base \
-    gst-plugins-good \
-    gst-plugins-bad \
-    gst-plugins-ugly \
-    gstreamer-dev && \
+    libgstreamer1.0-dev \
+    gstreamer1.0-plugins-base && \
     make
 
 FROM alpine:edge
