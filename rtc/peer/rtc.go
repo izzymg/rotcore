@@ -35,6 +35,7 @@ func New(streams []Stream, publicIPs []string) (*Streamer, error) {
 	settings := webrtc.SettingEngine{}
 	settings.SetLite(true)
 	settings.SetNAT1To1IPs(publicIPs, webrtc.ICECandidateTypeHost)
+	settings.SetEphemeralUDPPortRange(11000, 13000)
 
 	medias := webrtc.MediaEngine{}
 	medias.RegisterCodec(h264Codec)
