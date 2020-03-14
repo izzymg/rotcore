@@ -23,6 +23,8 @@ VIDEO_BITRATE=750
 
 echo "Streamer: $WIDTH x $HEIGHT at $FRAMERATE FPS"
 
+pulseaudio --start
+
 # H264 must used "constrained-baseline" and "byte-stream" for browser compatibility.
 # 'zerolatency' is also important for the best quality stream.
 
