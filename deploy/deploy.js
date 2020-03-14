@@ -95,7 +95,7 @@ const init = function() {
 
     const rotcore = new Process({
         directory: "./bin",
-        executable: "rotcore",
+        executable: "rtc",
         args: [...ipArgs, `--secret=${secretFilePath}`],
         environment: {
             SIGNAL_ADDRESS: config.rtcAddress,
