@@ -51,5 +51,5 @@ the resulting executables into `./deploy/bin` to be run by `deploy.js`
 pacman -S nodejs firefox xorg-server pulseaudio # v8+
 GIT_TOKEN=aaabbbcccdddeeefff docker_build.sh
 cd deploy
-node deploy.js
+PUBLIC_IPS=xxx.xxx.xx.xx,yyy.yyy.yy.yy node deploy.js
 ```
