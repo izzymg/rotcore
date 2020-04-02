@@ -80,19 +80,6 @@ const init = function() {
         args: [sandboxArg],
     });
 
-    const stream = new Process({
-        directory: "./stream",
-        executable: "stream.sh",
-        environment: { DISPLAY: config.display, }
-    });
-
-    const kbm = new Process({
-        directory: "./bin",
-        executable: "kbm",
-        environment: { DISPLAY: config.display, },
-        args: [config.kbmAddress, secretFilePath],
-    });
-
     const rotcore = new Process({
         directory: "./bin",
         executable: "rtc",
@@ -107,8 +94,6 @@ const init = function() {
     const exit = function() {
         console.log("Quitting children.");
         display.stop();
-        kbm.stop();
-        stream.stop();
         rotcore.stop();
         browse.stop(true);
     };
@@ -120,10 +105,8 @@ const init = function() {
     // Give a bit for Xorg to start
     setTimeout(() => {
         browse.start();
-        kbm.start();
         rotcore.start();
-        stream.start();
-    }, 500);
+    }, 1000);
 }
 
 init();
