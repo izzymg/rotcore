@@ -10,6 +10,10 @@ It runs an HTTP server using `Twirp` to respond to remote procedure calls from a
 
 It takes a secret used to authenticate requests, and binds to arbitrary UDP ports to stream.
 
+### Deps
+
+`apt-get install libx11-dev libxext-dev`
+
 ### Provision
 
 Provision contains some data used to actually build a room virtual machine from scratch.

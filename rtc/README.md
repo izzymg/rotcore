@@ -14,3 +14,7 @@ These should be `Opus` & `h264 constrained-baseline byte-stream` encoded streams
 As RTC performs p2p connections, it needs to advertise its Public IP address to the peers. 
 
 `rtc --ip=xxx.xxx.xx.xx --ip=yyy.yyy.yy.yy --secret=secret.txt`
+
+### Deps
+
+`apt-get install libx11-dev libxext-dev`
