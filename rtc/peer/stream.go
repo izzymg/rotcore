@@ -21,7 +21,6 @@ func getx264Parameters() *x264.Params {
 	}
 	mParams.Preset = x264.PresetVeryfast
 	mParams.BitRate = 5000 * 1000
-	mParams.KeyFrameInterval = 2
 	return &mParams
 }
 
