@@ -7,10 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
+	"log"
 	"sync"
 
-	"github.com/izzymg/rotcommon/rtcservice"
+	"bitbucket.org/izzymg/rtmessages"
+	"github.com/pion/mediadevices"
 	"github.com/pion/webrtc/v2"
 	"github.com/twitchtv/twirp"
 )
@@ -30,27 +31,19 @@ The public IPs are used to tell peers where the server is on the network,
 or public internet, to avoid needing to do a STUN lookup. As such,
 this server should be behind a DNAT public IP address.
 */
-func New(streams []Stream, publicIPs []string) (*Streamer, error) {
+func New(publicIPs []string) (*Streamer, error) {
 
-	settings := webrtc.SettingEngine{}
+	var settings webrtc.SettingEngine
 	settings.SetLite(true)
 	settings.SetNAT1To1IPs(publicIPs, webrtc.ICECandidateTypeHost)
 	settings.SetEphemeralUDPPortRange(11000, 13000)
 
-	medias := webrtc.MediaEngine{}
-	medias.RegisterCodec(h264Codec)
-	medias.RegisterCodec(opusCodec)
-
-	// Initialize all tracks -> streams
-	trackStreams, err := makeTrackStreams(streams)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize track streams: %w", err)
-	}
+	var me webrtc.MediaEngine
+	me.RegisterCodec(h264Codec)
 
 	server := &Streamer{
-		api:          webrtc.NewAPI(webrtc.WithMediaEngine(medias), webrtc.WithSettingEngine(settings)),
-		peers:        make(map[string]*webrtc.PeerConnection),
-		trackStreams: trackStreams,
+		api:   webrtc.NewAPI(webrtc.WithSettingEngine(settings), webrtc.WithMediaEngine(me)),
+		peers: make(map[string]*webrtc.PeerConnection),
 	}
 
 	return server, nil
@@ -61,53 +54,15 @@ Streamer manages and streams data to WebRTC peers using RPCs to signal with
 the central service, storeing active peer connections.
 */
 type Streamer struct {
-	api          *webrtc.API
-	peers        map[string]*webrtc.PeerConnection
-	mut          sync.RWMutex
-	trackStreams map[*webrtc.Track]Stream
-}
-
-/*
-StartStreaming begins streaming data from configured UDP streams to the RTC tracks,
-spawning len(streams) goroutines.
-*/
-func (s *Streamer) StartStreaming(ctx context.Context) error {
-	for track, stream := range s.trackStreams {
-		raddr, err := net.ResolveUDPAddr("udp", stream.UDPAddress)
-		if err != nil {
-			return err
-		}
-		conn, err := net.ListenUDP("udp", raddr)
-		if err != nil {
-			return err
-		}
-
-		var writeStream func()
-		switch stream.Type {
-		case H264Stream:
-			writeStream = writeH264(track, conn)
-		case OpusStream:
-			writeStream = writeOpus(track, conn)
-		}
-
-		go func() {
-			for {
-				select {
-				case <-ctx.Done():
-					fmt.Printf("Stream stopping: %v\n", ctx.Err())
-					conn.Close()
-				default:
-					writeStream()
-				}
-			}
-		}()
-	}
-	return nil
+	api    *webrtc.API
+	peers  map[string]*webrtc.PeerConnection
+	mut    sync.RWMutex
+	stream mediadevices.MediaStream
 }
 
 // Handshake handles incoming offers from peers, returning back an answer.
-func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtcservice.Offer) (*rtcservice.Answer, error) {
-	fmt.Printf("Offer received from %q\n", incomingOffer.GetPeerId())
+func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtmessages.Offer) (*rtmessages.Answer, error) {
+	log.Printf("Offer received from %q\n", incomingOffer.GetPeerId())
 
 	peerID := incomingOffer.GetPeerId()
 	if len(peerID) < 1 {
@@ -122,7 +77,29 @@ func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtcservice.Offe
 	// Create a connection to the peer.
 	peer, err := s.api.NewPeerConnection(peerConfiguration)
 	if err != nil {
-		return nil, twirp.InternalErrorWith(err)
+		return nil, twirp.InternalErrorWith(fmt.Errorf("failed to create peer connection: %w", err))
+	}
+
+	// Add tracks to peer
+	if s.stream == nil {
+		stream, err := getStream(peer)
+		if err != nil {
+			return nil, twirp.InternalErrorWith(fmt.Errorf("failed to get stream: %w", err))
+		}
+		s.stream = stream
+	}
+	for _, tracker := range s.stream.GetTracks() {
+		t := tracker.Track()
+		tracker.OnEnded(func(err error) {
+			log.Printf("Track (ID: %s, Label: %s) ended with error: %v\n",
+				t.ID(), t.Label(), err)
+		})
+		_, err = peer.AddTransceiverFromTrack(t, webrtc.RtpTransceiverInit{
+			Direction: webrtc.RTPTransceiverDirectionSendonly,
+		})
+		if err != nil {
+			return nil, twirp.InternalErrorWith(fmt.Errorf("failed to add track: %w", err))
+		}
 	}
 
 	s.addPeer(peerID, peer)
@@ -134,21 +111,11 @@ func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtcservice.Offe
 		}
 	})
 
-	// Add the stream tracks to send on our connection
-	for track := range s.trackStreams {
-		_, err := peer.AddTrack(track)
-		if err != nil {
-			s.removePeer(peerID)
-			return nil, twirp.InternalErrorWith(err)
-		}
-	}
-
 	// Set description about the remote peer, then answer the peer
-
 	err = peer.SetRemoteDescription(offer)
 	if err != nil {
 		s.removePeer(peerID)
-		return nil, twirp.InternalErrorWith(err)
+		return nil, twirp.InternalErrorWith(fmt.Errorf("failed to set remote desc: %w", err))
 	}
 
 	answer, err := peer.CreateAnswer(nil)
@@ -163,15 +130,15 @@ func (s *Streamer) Handshake(ctx context.Context, incomingOffer *rtcservice.Offe
 		return nil, twirp.InternalErrorWith(err)
 	}
 
-	return &rtcservice.Answer{
+	return &rtmessages.Answer{
 		PeerId: peerID,
 		Sdp:    answer.SDP,
 	}, nil
 }
 
 // NewCandidate pushes ICE candidates onto WebRTC peers.
-func (s *Streamer) NewCandidate(ctx context.Context, incomingCandidate *rtcservice.Candidate) (*rtcservice.OK, error) {
-	fmt.Printf("Candidate received from %q`\n", incomingCandidate.GetPeerId())
+func (s *Streamer) NewCandidate(ctx context.Context, incomingCandidate *rtmessages.Candidate) (*rtmessages.OK, error) {
+	log.Printf("Candidate received from %q`\n", incomingCandidate.GetPeerId())
 
 	peer := s.getPeer(incomingCandidate.GetPeerId())
 	if peer == nil {
@@ -188,7 +155,7 @@ func (s *Streamer) NewCandidate(ctx context.Context, incomingCandidate *rtcservi
 		UsernameFragment: incomingCandidate.GetUsernameFragment(),
 	})
 
-	return &rtcservice.OK{
+	return &rtmessages.OK{
 		Ok: 1,
 	}, nil
 }
@@ -198,7 +165,7 @@ func (s *Streamer) addPeer(id string, peer *webrtc.PeerConnection) {
 	s.mut.Lock()
 	s.peers[id] = peer
 	s.mut.Unlock()
-	fmt.Printf("Added peer %q\n", id)
+	log.Printf("Added peer %q\n", id)
 }
 
 // Fetch a peer connection from the map, thread safe.
@@ -213,7 +180,7 @@ func (s *Streamer) removePeer(id string) error {
 	s.mut.Lock()
 	defer s.mut.Unlock()
 	if peer, ok := s.peers[id]; ok {
-		fmt.Printf("Removed peer %q\n", id)
+		log.Printf("Removed peer %q\n", id)
 		err := peer.Close()
 		delete(s.peers, id)
 		return err
