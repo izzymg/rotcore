@@ -1,4 +1,7 @@
-# Rotcore
+# Rotcore (RoTCore)
+
+Rotcore was a project that allowed a chatroom to gather and spin up a light Linux VM, take over the Xorg display controls and browse the web via Firefox together.
+This was accomplished via WebRTC (p2p streaming) and Websocket (chat & input control).
 
 This repository acts as a monorepo for all the source code of all of the programs needed to run a Rotcore **room**.
 
